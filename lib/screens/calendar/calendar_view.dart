@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Badge, SegmentedButton;
 
 import '../../models/formatted_date.dart';
 import '../../models/task.dart';
@@ -6,6 +6,7 @@ import '../../widgets/badge.dart';
 import '../../widgets/custom_calendar.dart';
 import '../../widgets/segmented_button.dart';
 import '../../widgets/task_list.dart';
+
 
 class CalendarView extends StatelessWidget {
   const CalendarView({

@@ -22,7 +22,7 @@ class _MainScreenState extends State<MainScreen> {
   int? _scrollToTaskId;
 
   final List<ScheduleTask> _scheduleTasks = [
-    const ScheduleTask(
+     ScheduleTask(
       id: 1,
       title: 'Встреча с клиентом',
       description: 'Обсудить детали проекта',
@@ -32,7 +32,7 @@ class _MainScreenState extends State<MainScreen> {
       isCompleted: false,
       date: DateTime(2025, 10, 16),
     ),
-    const ScheduleTask(
+     ScheduleTask(
       id: 2,
       title: 'Работа над отчетом',
       startTime: '14:00',
@@ -41,7 +41,7 @@ class _MainScreenState extends State<MainScreen> {
       isCompleted: false,
       date: DateTime(2025, 10, 16),
     ),
-    const ScheduleTask(
+     ScheduleTask(
       id: 3,
       title: 'Спортзал',
       startTime: '18:00',
@@ -50,7 +50,7 @@ class _MainScreenState extends State<MainScreen> {
       isCompleted: true,
       date: DateTime(2025, 10, 16),
     ),
-    const ScheduleTask(
+     ScheduleTask(
       id: 4,
       title: 'Важная презентация',
       description: 'Подготовить материалы для презентации',
