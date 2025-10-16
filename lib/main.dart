@@ -1,122 +1,417 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
+class Task {
+  Task({required this.title, this.isImportant = false});
+
+  final String title;
+  final bool isImportant;
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'My Plans - Daily Planner',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        scaffoldBackgroundColor: const Color(0xFFF5F6FA),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const HomeScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomeScreenState extends State<HomeScreen> {
+  final DateTime _today = DateTime.now();
+  late DateTime _focusedMonth;
+  bool _showOnlyImportant = false;
+  late final Map<DateTime, List<Task>> _tasksByDay;
 
-  void _incrementCounter() {
+  static final List<String> _monthNames = <String>[
+    'Январь',
+    'Февраль',
+    'Март',
+    'Апрель',
+    'Май',
+    'Июнь',
+    'Июль',
+    'Август',
+    'Сентябрь',
+    'Октябрь',
+    'Ноябрь',
+    'Декабрь',
+  ];
+
+  static final List<String> _weekdayNames = <String>[
+    'Пн',
+    'Вт',
+    'Ср',
+    'Чт',
+    'Пт',
+    'Сб',
+    'Вс',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(initializeDateFormatting('ru_RU'));
+    _focusedMonth = DateTime(_today.year, _today.month);
+    _tasksByDay = _generateDemoTasks();
+  }
+
+  Map<DateTime, List<Task>> _generateDemoTasks() {
+    final Map<DateTime, List<Task>> tasks = <DateTime, List<Task>>{};
+    void addTask(DateTime date, Task task) {
+      final DateTime normalized = DateTime(date.year, date.month, date.day);
+      tasks.putIfAbsent(normalized, () => <Task>[]).add(task);
+    }
+
+    addTask(_today, Task(title: 'Позвонить клиенту'));
+    addTask(_today, Task(title: 'Подготовить отчёт', isImportant: true));
+    addTask(_today, Task(title: 'Тренировка', isImportant: true));
+    addTask(_today, Task(title: 'Купить продукты'));
+    addTask(_today, Task(title: 'Прогулка с друзьями'));
+
+    addTask(_today.add(const Duration(days: 1)),
+        Task(title: 'Отправить документы', isImportant: true));
+    addTask(_today.add(const Duration(days: 2)),
+        Task(title: 'Работа над проектом'));
+    addTask(_today.add(const Duration(days: 4)),
+        Task(title: 'Презентация', isImportant: true));
+
+    return tasks;
+  }
+
+  List<Task> _tasksFor(DateTime date) {
+    final DateTime normalized = DateTime(date.year, date.month, date.day);
+    return _tasksByDay[normalized] ?? <Task>[];
+  }
+
+  String _dayLabel(DateTime date) {
+    final DateFormat formatter = DateFormat('d MMMM, EEEE', 'ru_RU');
+    return formatter.format(date);
+  }
+
+  int get _daysInFocusedMonth {
+    final DateTime firstDayNextMonth =
+        DateTime(_focusedMonth.year, _focusedMonth.month + 1, 1);
+    return firstDayNextMonth.subtract(const Duration(days: 1)).day;
+  }
+
+  void _changeMonth(int offset) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + offset);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final List<Task> todayTasks = _tasksFor(_today);
+    final List<Task> importantTodayTasks =
+        todayTasks.where((Task task) => task.isImportant).toList();
+
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Мои планы'),
+        centerTitle: false,
+        elevation: 0,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _buildMonthHeader(),
+                const SizedBox(height: 16),
+                _buildCalendar(),
+                const SizedBox(height: 24),
+                Text(
+                  'Сегодня: ${_dayLabel(_today)}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                _buildTasksSummaryCard(
+                  context,
+                  todayTasks: todayTasks,
+                  importantTodayTasks: importantTodayTasks,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthHeader() {
+    final String monthTitle =
+        '${_monthNames[_focusedMonth.month - 1]} ${_focusedMonth.year}';
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Text(
+          monthTitle,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Row(
           children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            IconButton(
+              icon: const Icon(Icons.chevron_left),
+              onPressed: () => _changeMonth(-1),
+            ),
+            IconButton(
+              icon: const Icon(Icons.chevron_right),
+              onPressed: () => _changeMonth(1),
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildCalendar() {
+    final DateTime firstDayOfMonth =
+        DateTime(_focusedMonth.year, _focusedMonth.month, 1);
+    final int leadingEmptyCells = (firstDayOfMonth.weekday + 6) % 7;
+    final int itemCount = leadingEmptyCells + _daysInFocusedMonth;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: _weekdayNames
+                .map(
+                  (String name) => Expanded(
+                    child: Center(
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+            ),
+            itemCount: itemCount,
+            itemBuilder: (BuildContext context, int index) {
+              if (index < leadingEmptyCells) {
+                return const SizedBox();
+              }
+              final int dayNumber = index - leadingEmptyCells + 1;
+              final DateTime dayDate =
+                  DateTime(_focusedMonth.year, _focusedMonth.month, dayNumber);
+              final bool isToday = dayDate.year == _today.year &&
+                  dayDate.month == _today.month &&
+                  dayDate.day == _today.day;
+              final List<Task> tasks = _tasksFor(dayDate);
+              final bool hasImportant =
+                  tasks.any((Task task) => task.isImportant);
+
+              return _CalendarDayCell(
+                day: dayNumber,
+                isToday: isToday,
+                hasImportant: hasImportant,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTasksSummaryCard(
+    BuildContext context, {
+    required List<Task> todayTasks,
+    required List<Task> importantTodayTasks,
+  }) {
+    final TextStyle? titleStyle = Theme.of(context).textTheme.titleMedium;
+    final List<Task> visibleTasks = _showOnlyImportant
+        ? importantTodayTasks
+        : todayTasks;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                'Дела на сегодня',
+                style: titleStyle?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _showOnlyImportant = !_showOnlyImportant;
+                  });
+                },
+                icon: Icon(
+                  _showOnlyImportant ? Icons.visibility_off : Icons.star,
+                  color:
+                      _showOnlyImportant ? Colors.grey.shade600 : Colors.redAccent,
+                ),
+                label: Text(
+                  _showOnlyImportant ? 'Показать все' : 'Только важные',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${todayTasks.length} дел, ${importantTodayTasks.length} важных',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          if (visibleTasks.isEmpty)
+            const Text('Нет дел для отображения')
+          else
+            Column(
+              children: visibleTasks
+                  .map(
+                    (Task task) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(
+                            task.isImportant ? Icons.star : Icons.check_circle,
+                            color: task.isImportant
+                                ? Colors.redAccent
+                                : Colors.green,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              task.title,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CalendarDayCell extends StatelessWidget {
+  const _CalendarDayCell({
+    required this.day,
+    required this.isToday,
+    required this.hasImportant,
+  });
+
+  final int day;
+  final bool isToday;
+  final bool hasImportant;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Stack(
+      children: <Widget>[
+        Container(
+          decoration: BoxDecoration(
+            color: isToday ? colorScheme.primary.withOpacity(0.1) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isToday ? colorScheme.primary : Colors.grey.shade300,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              '$day',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isToday ? colorScheme.primary : Colors.black87,
+              ),
+            ),
+          ),
+        ),
+        if (hasImportant)
+          Positioned(
+            top: 6,
+            right: 6,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: Colors.redAccent,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
