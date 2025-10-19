@@ -172,12 +172,14 @@ class _CustomCalendarState extends State<CustomCalendar> {
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 220,
-                      child: ListView.separated(
-                        itemCount: monthLabels.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 4),
-                        itemBuilder: (context, index) {
-                          final month = index + 1;
-                          final isSelected =
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: ListView.separated(
+                          itemCount: monthLabels.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 4),
+                          itemBuilder: (context, index) {
+                            final month = index + 1;
+                            final isSelected =
                               month == _currentMonth.month && tempYear == _currentMonth.year;
                           final isTodayMonth =
                               month == widget.today.month && tempYear == widget.today.year;
@@ -204,6 +206,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                             selectedColor: const Color(0xFF1D4ED8),
                           );
                         },
+                        ),
                       ),
                     ),
                   ],
