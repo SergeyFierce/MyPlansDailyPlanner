@@ -5,6 +5,7 @@ import '../../models/formatted_date.dart';
 import '../../models/task.dart';
 import '../../widgets/badge.dart';
 import '../../widgets/custom_calendar.dart';
+import '../../widgets/dialogs/task_details_dialog.dart';
 import '../../widgets/segmented_button.dart';
 import '../../widgets/task_list.dart';
 
@@ -120,6 +121,17 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
           task.date.day == date.day,
     )
         .toList();
+  }
+
+  void _openTaskDetails(ScheduleTask task) {
+    showDialog(
+      context: context,
+      builder: (context) => TaskDetailsDialog(
+        task: task,
+        onUpdateTask: widget.onUpdateTask,
+        onDeleteTask: widget.onDeleteTask,
+      ),
+    );
   }
 
   FormattedDate _formatDate(DateTime date) {
@@ -347,7 +359,7 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
                                     tasks: displayedTasks,
                                     onTaskClick: widget.onTaskClick,
                                     onUpdateTask: widget.onUpdateTask,
-                                    onDeleteTask: widget.onDeleteTask,
+                                    onOpenDetails: _openTaskDetails,
                                   ),
                               ],
                             ),

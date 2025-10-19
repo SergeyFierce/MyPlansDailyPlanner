@@ -9,13 +9,13 @@ class TaskList extends StatelessWidget {
     required this.tasks,
     required this.onTaskClick,
     required this.onUpdateTask,
-    required this.onDeleteTask,
+    required this.onOpenDetails,
   });
 
   final List<ScheduleTask> tasks;
   final ValueChanged<int> onTaskClick;
   final ValueChanged<ScheduleTask> onUpdateTask;
-  final ValueChanged<int> onDeleteTask;
+  final ValueChanged<ScheduleTask> onOpenDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -25,10 +25,10 @@ class TaskList extends StatelessWidget {
             (task) => TaskCard(
               key: ValueKey(task.id),
               task: task,
-              onTap: () => onTaskClick(task.id),
-              onToggleComplete: () =>
-                  onUpdateTask(task.copyWith(isCompleted: !task.isCompleted)),
-              onDelete: () => onDeleteTask(task.id),
+              enableExpansion: false,
+              onPrimaryTap: () => onTaskClick(task.id),
+              onUpdateTask: onUpdateTask,
+              onOpenDetails: () => onOpenDetails(task),
             ),
           )
           .toList(),

@@ -141,12 +141,22 @@ class _DayScheduleViewState extends State<DayScheduleView> {
 
   Widget _buildTimeline(List<ScheduleTask> tasks) {
     final sortedTasks = [...tasks]
-      ..sort((a, b) => minutesFromTime(a.startTime).compareTo(minutesFromTime(b.startTime)));
-    final Map<int, List<ScheduleTask>> tasksByHour = {};
+      ..sort((a, b) {
+        final startCompare =
+            minutesFromTime(a.startTime).compareTo(minutesFromTime(b.startTime));
+        if (startCompare != 0) {
+          return startCompare;
+        }
+        return minutesFromTime(a.endTime).compareTo(minutesFromTime(b.endTime));
+      });
+    final Map<int, List<ScheduleTask>> tasksBySlot = {};
     for (final task in sortedTasks) {
-      final hour = parseTimeOfDay(task.startTime)?.hour ?? 0;
-      tasksByHour.putIfAbsent(hour, () => []).add(task);
+      final minutes = minutesFromTime(task.startTime);
+      final slot = minutes ~/ 30;
+      tasksBySlot.putIfAbsent(slot, () => []).add(task);
     }
+
+    final slots = List<int>.generate(49, (index) => index);
 
     return Card(
       child: Padding(
@@ -180,22 +190,20 @@ class _DayScheduleViewState extends State<DayScheduleView> {
                   ],
                 ),
               ),
-            for (var hour = 0; hour <= 24; hour++) ...[
-              _HourMarker(hour: hour),
-              if (hour < 24)
-                ...List.generate(tasksByHour[hour]?.length ?? 0, (index) {
-                  final task = tasksByHour[hour]![index];
+            for (final slot in slots) ...[
+              _TimelineMarker(minutes: slot * 30),
+              if (slot < 48)
+                ...List.generate(tasksBySlot[slot]?.length ?? 0, (index) {
+                  final task = tasksBySlot[slot]![index];
                   final key = _taskKeys.putIfAbsent(task.id, () => GlobalKey());
                   return Padding(
                     key: key,
-                    padding: const EdgeInsets.only(left: 72, right: 16, bottom: 12),
+                    padding:
+                        const EdgeInsets.only(left: 84, right: 16, top: 8, bottom: 12),
                     child: TaskCard(
                       task: task,
-                      onTap: () => _showTaskDetails(task),
-                      onToggleComplete: () => widget.onUpdateTask(
-                        task.copyWith(isCompleted: !task.isCompleted),
-                      ),
-                      onDelete: () => widget.onDeleteTask(task.id),
+                      onUpdateTask: widget.onUpdateTask,
+                      onOpenDetails: () => _showTaskDetails(task),
                     ),
                   );
                 }),
@@ -278,15 +286,18 @@ class _DayScheduleViewState extends State<DayScheduleView> {
   }
 }
 
-class _HourMarker extends StatelessWidget {
-  const _HourMarker({required this.hour});
+class _TimelineMarker extends StatelessWidget {
+  const _TimelineMarker({required this.minutes});
 
-  final int hour;
-
-  String get _label => '${hour.toString().padLeft(2, '0')}:00';
+  final int minutes;
 
   @override
   Widget build(BuildContext context) {
+    final hour = minutes ~/ 60;
+    final minute = minutes % 60;
+    final label = '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    final isFullHour = minute == 0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -294,9 +305,10 @@ class _HourMarker extends StatelessWidget {
           SizedBox(
             width: 52,
             child: Text(
-              _label,
+              label,
               style: TextStyle(
-                color: hour == 24 ? Colors.grey.shade400 : Colors.grey.shade600,
+                color: isFullHour ? Colors.grey.shade600 : Colors.grey.shade400,
+                fontWeight: isFullHour ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
@@ -304,7 +316,7 @@ class _HourMarker extends StatelessWidget {
           Expanded(
             child: Container(
               height: 1,
-              color: Colors.grey.withOpacity(0.2),
+              color: Colors.grey.withOpacity(isFullHour ? 0.3 : 0.15),
             ),
           ),
         ],
