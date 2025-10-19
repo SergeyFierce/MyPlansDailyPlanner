@@ -4,13 +4,11 @@ class CustomCalendar extends StatefulWidget {
   const CustomCalendar({
     super.key,
     required this.selected,
-    required this.today,
     required this.onSelect,
     required this.importantDates,
   });
 
   final DateTime selected;
-  final DateTime today;
   final ValueChanged<DateTime> onSelect;
   final List<DateTime> importantDates;
 
@@ -25,7 +23,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   void initState() {
     super.initState();
-    _currentMonth = DateTime(widget.today.year, widget.today.month);
+    _currentMonth = DateTime(widget.selected.year, widget.selected.month);
   }
 
   @override
@@ -80,106 +78,6 @@ class _CustomCalendarState extends State<CustomCalendar> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  void _handleMonthYearTap() async {
-    final selected = await showDialog<DateTime>(
-      context: context,
-      builder: (context) {
-        int tempYear = _currentMonth.year;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            const monthLabels = [
-              'Янв',
-              'Фев',
-              'Мар',
-              'Апр',
-              'Май',
-              'Июн',
-              'Июл',
-              'Авг',
-              'Сен',
-              'Окт',
-              'Ноя',
-              'Дек'
-            ];
-
-            return AlertDialog(
-              title: const Text('Выберите месяц и год'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: 180,
-                      child: YearPicker(
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                        initialDate: DateTime(tempYear),
-                        selectedDate: DateTime(tempYear),
-                        onChanged: (date) {
-                          setModalState(() => tempYear = date.year);
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: List.generate(monthLabels.length, (index) {
-                        final month = index + 1;
-                        final isSelected =
-                            month == _currentMonth.month && tempYear == _currentMonth.year;
-                        return ChoiceChip(
-                          label: Text(monthLabels[index]),
-                          selected: isSelected,
-                          onSelected: (_) {
-                            Navigator.of(context).pop(DateTime(tempYear, month));
-                          },
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Отмена'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (selected != null) {
-      setState(() {
-        _currentMonth = DateTime(selected.year, selected.month);
-      });
-
-      final currentSelectedDay = widget.selected.day;
-      final daysInMonth = DateTime(selected.year, selected.month + 1, 0).day;
-      final newDay = currentSelectedDay.clamp(1, daysInMonth).toInt();
-      widget.onSelect(DateTime(selected.year, selected.month, newDay));
-    }
-  }
-
-  void _handleHorizontalDrag(DragEndDetails details) {
-    final velocity = details.primaryVelocity ?? 0;
-    if (velocity > 0) {
-      _previousMonth();
-    } else if (velocity < 0) {
-      _nextMonth();
-    }
-  }
-
-  bool _isToday(DateTime date) {
-    return date.year == widget.today.year &&
-        date.month == widget.today.month &&
-        date.day == widget.today.day;
-  }
-
   @override
   Widget build(BuildContext context) {
     final days = _getMonthDays();
@@ -198,28 +96,19 @@ class _CustomCalendarState extends State<CustomCalendar> {
       'Декабрь'
     ];
 
-    return GestureDetector(
-      onHorizontalDragEnd: _handleHorizontalDrag,
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(onPressed: _previousMonth, icon: const Icon(Icons.chevron_left)),
-              InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: _handleMonthYearTap,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Text(
-                    '${monthNames[_currentMonth.month - 1]} ${_currentMonth.year}',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
-            ],
-          ),
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(onPressed: _previousMonth, icon: const Icon(Icons.chevron_left)),
+            Text(
+              '${monthNames[_currentMonth.month - 1]} ${_currentMonth.year}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+          ],
+        ),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
@@ -251,7 +140,6 @@ class _CustomCalendarState extends State<CustomCalendar> {
             final isCurrentMonth = date.month == _currentMonth.month;
             final isSelected = _isSameDay(date, widget.selected);
             final isImportant = _isImportantDate(date);
-            final isToday = _isToday(date);
 
             Color textColor = isCurrentMonth ? Colors.black : Colors.grey;
             FontWeight fontWeight = FontWeight.normal;
@@ -260,8 +148,6 @@ class _CustomCalendarState extends State<CustomCalendar> {
               fontWeight = FontWeight.bold;
             } else if (isImportant) {
               fontWeight = FontWeight.bold;
-            } else if (isToday) {
-              fontWeight = FontWeight.w600;
             }
 
             final decoration = isSelected
@@ -271,8 +157,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
                   )
                 : BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: isToday
-                        ? Border.all(color: const Color(0xFF4F46E5).withOpacity(0.3))
+                    border: isImportant
+                        ? Border.all(color: const Color(0xFFDC2626), width: 1.5)
                         : null,
                   );
 
@@ -283,27 +169,11 @@ class _CustomCalendarState extends State<CustomCalendar> {
                 onTap: () => widget.onSelect(date),
                 child: Container(
                   decoration: decoration,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Text(
-                        '${date.day}',
-                        style: TextStyle(color: textColor, fontWeight: fontWeight),
-                      ),
-                      if (isImportant)
-                        Positioned(
-                          right: 6,
-                          bottom: 6,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: isSelected ? Colors.white : const Color(0xFFDC2626),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                    ],
+                  child: Center(
+                    child: Text(
+                      '${date.day}',
+                      style: TextStyle(color: textColor, fontWeight: fontWeight),
+                    ),
                   ),
                 ),
               ),
