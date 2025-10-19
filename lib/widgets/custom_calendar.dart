@@ -502,7 +502,6 @@ class _CustomCalendarState extends State<CustomCalendar>
             AnimatedSize(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
-              vsync: this,
               child: _buildSelectionPanel(),
             ),
             const SizedBox(height: 12),
