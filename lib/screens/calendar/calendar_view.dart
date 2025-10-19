@@ -8,7 +8,7 @@ import '../../widgets/segmented_button.dart';
 import '../../widgets/task_list.dart';
 
 
-class CalendarView extends StatelessWidget {
+class CalendarView extends StatefulWidget {
   const CalendarView({
     super.key,
     required this.selectedDate,
@@ -36,8 +36,13 @@ class CalendarView extends StatelessWidget {
   final VoidCallback onToggleExpanded;
   final VoidCallback onToggleShowImportant;
 
+  @override
+  State<CalendarView> createState() => _CalendarViewState();
+}
+
+class _CalendarViewState extends State<CalendarView> with TickerProviderStateMixin {
   List<ScheduleTask> _getTasksForDate(DateTime date) {
-    return scheduleTasks
+    return widget.scheduleTasks
         .where(
           (task) =>
               task.date.year == date.year &&
@@ -82,12 +87,13 @@ class CalendarView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final todayTasks = _getTasksForDate(today);
+    final todayTasks = _getTasksForDate(widget.today);
     final importantTodayTasks = todayTasks.where((task) => task.isImportant).toList();
     final completedTodayTasks = todayTasks.where((task) => task.isCompleted).toList();
-    final displayedTasks = showOnlyImportant ? importantTodayTasks : todayTasks;
+    final displayedTasks =
+        widget.showOnlyImportant ? importantTodayTasks : todayTasks;
 
-    final todayFormatted = _formatDate(today);
+    final todayFormatted = _formatDate(widget.today);
 
     final theme = Theme.of(context);
     final isLightTheme = theme.brightness == Brightness.light;
@@ -124,11 +130,13 @@ class CalendarView extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   child: CustomCalendar(
-                    selected: selectedDate,
-                    today: today,
-                    onSelect: onDateClick,
-                    importantDates:
-                        scheduleTasks.where((t) => t.isImportant).map((t) => t.date).toList(),
+                    selected: widget.selectedDate,
+                    today: widget.today,
+                    onSelect: widget.onDateClick,
+                    importantDates: widget.scheduleTasks
+                        .where((t) => t.isImportant)
+                        .map((t) => t.date)
+                        .toList(),
                   ),
                 ),
               ),
@@ -177,72 +185,85 @@ class CalendarView extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            onPressed: onToggleExpanded,
+                            onPressed: widget.onToggleExpanded,
                             style: IconButton.styleFrom(
                               foregroundColor: const Color(0xFF4F46E5),
                             ),
                             icon: RotatedBox(
-                              quarterTurns: isExpanded ? 2 : 0,
+                              quarterTurns: widget.isExpanded ? 2 : 0,
                               child: const Icon(Icons.expand_more),
                             ),
                           ),
                         ],
                       ),
-                      if (isExpanded)
-                        Column(
-                          children: [
-                            if (importantTodayTasks.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: SegmentedButton(
-                                      label: 'Все дела',
-                                      selected: !showOnlyImportant,
-                                      onTap: !showOnlyImportant ? null : onToggleShowImportant,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: SegmentedButton(
-                                      label: 'Только важные',
-                                      selected: showOnlyImportant,
-                                      onTap: showOnlyImportant ? null : onToggleShowImportant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                            if (displayedTasks.isEmpty)
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: const [
-                                    Icon(Icons.inbox, color: Colors.grey),
-                                    SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        'На сегодня задач нет',
-                                        style: TextStyle(color: Colors.grey),
+                      ClipRect(
+                        child: AnimatedSize(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          alignment: Alignment.topCenter,
+                          vsync: this,
+                          child: widget.isExpanded
+                              ? Column(
+                                  children: [
+                                    if (importantTodayTasks.isNotEmpty) ...[
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: SegmentedButton(
+                                              label: 'Все дела',
+                                              selected: !widget.showOnlyImportant,
+                                              onTap: !widget.showOnlyImportant
+                                                  ? null
+                                                  : widget.onToggleShowImportant,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: SegmentedButton(
+                                              label: 'Только важные',
+                                              selected: widget.showOnlyImportant,
+                                              onTap: widget.showOnlyImportant
+                                                  ? null
+                                                  : widget.onToggleShowImportant,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
+                                    ],
+                                    const SizedBox(height: 16),
+                                    if (displayedTasks.isEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade100,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          children: const [
+                                            Icon(Icons.inbox, color: Colors.grey),
+                                            SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                'На сегодня задач нет',
+                                                style: TextStyle(color: Colors.grey),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    else
+                                      TaskList(
+                                        tasks: displayedTasks,
+                                        onTaskClick: widget.onTaskClick,
+                                        onUpdateTask: widget.onUpdateTask,
+                                        onDeleteTask: widget.onDeleteTask,
+                                      ),
                                   ],
-                                ),
-                              )
-                            else
-                              TaskList(
-                                tasks: displayedTasks,
-                                onTaskClick: onTaskClick,
-                                onUpdateTask: onUpdateTask,
-                                onDeleteTask: onDeleteTask,
-                              ),
-                          ],
+                                )
+                              : const SizedBox.shrink(),
                         ),
+                      ),
                     ],
                   ),
                 ),
