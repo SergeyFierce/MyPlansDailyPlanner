@@ -177,12 +177,24 @@ class _CustomCalendarState extends State<CustomCalendar> {
                         final month = index + 1;
                         final isSelected =
                             month == _currentMonth.month && tempYear == _currentMonth.year;
+                        final isTodayMonth =
+                            month == widget.today.month && tempYear == widget.today.year;
                         return ChoiceChip(
                           label: Text(monthLabels[index]),
                           selected: isSelected,
+                          selectedColor: const Color(0xFFEEF2FF),
                           onSelected: (_) {
                             Navigator.of(context).pop(DateTime(tempYear, month));
                           },
+                          shape: StadiumBorder(
+                            side: BorderSide(
+                              color: isTodayMonth ? const Color(0xFF4F46E5) : Colors.transparent,
+                              width: 1.5,
+                            ),
+                          ),
+                          labelStyle: TextStyle(
+                            color: isSelected ? const Color(0xFF1D4ED8) : null,
+                          ),
                         );
                       }),
                     ),
@@ -310,7 +322,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       Color textColor = isCurrentMonth ? Colors.black : Colors.grey;
                       FontWeight fontWeight = FontWeight.normal;
                       if (isToday) {
-                        textColor = Colors.white;
+                        textColor = const Color(0xFF1D4ED8);
                         fontWeight = FontWeight.w600;
                       } else if (isSelected) {
                         textColor = const Color(0xFF4F46E5);
@@ -322,7 +334,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       final BoxDecoration decoration;
                       if (isToday) {
                         decoration = BoxDecoration(
-                          color: const Color(0xFF4F46E5),
+                          color: const Color(0xFFDBEAFE),
                           borderRadius: BorderRadius.circular(12),
                         );
                       } else if (isSelected) {
