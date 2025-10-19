@@ -244,7 +244,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final cellSize = constraints.maxWidth / 7;
-        final gridHeight = cellSize * 6;
+        final gridHeight = cellSize * 6 - 32;
 
         return Column(
           children: [
@@ -349,7 +349,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       }
 
                       return Padding(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(2),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () {

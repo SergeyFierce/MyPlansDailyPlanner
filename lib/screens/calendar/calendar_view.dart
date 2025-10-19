@@ -122,7 +122,7 @@ class CalendarView extends StatelessWidget {
                 shadowColor: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
                 shape: cardShape,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   child: CustomCalendar(
                     selected: selectedDate,
                     today: today,
