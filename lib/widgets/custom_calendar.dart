@@ -18,20 +18,28 @@ class CustomCalendar extends StatefulWidget {
   State<CustomCalendar> createState() => _CustomCalendarState();
 }
 
-class _CustomCalendarState extends State<CustomCalendar> {
+class _CustomCalendarState extends State<CustomCalendar>
+    with TickerProviderStateMixin {
   static const int _baseYear = 2000;
   static const int _lastYear = 2100;
+  static const double _yearItemExtent = 44.0;
 
   late DateTime _currentMonth;
   late final PageController _pageController;
+  late final ScrollController _yearScrollController;
 
   final List<String> _weekDays = const ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  bool _showMonthSelection = false;
+  bool _showYearSelection = false;
 
   @override
   void initState() {
     super.initState();
     _currentMonth = DateTime(widget.today.year, widget.today.month);
     _pageController = PageController(initialPage: _monthToPage(_currentMonth));
+    _yearScrollController = ScrollController(
+      initialScrollOffset: _yearToOffset(_currentMonth.year),
+    );
   }
 
   @override
@@ -51,11 +59,16 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   void dispose() {
     _pageController.dispose();
+    _yearScrollController.dispose();
     super.dispose();
   }
 
   int _monthToPage(DateTime month) {
     return (month.year - _baseYear) * 12 + (month.month - 1);
+  }
+
+  double _yearToOffset(int year) {
+    return (year - _baseYear) * _yearItemExtent;
   }
 
   DateTime _pageToMonth(int page) {
@@ -117,6 +130,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
     final targetPage = _monthToPage(month);
     setState(() {
       _currentMonth = DateTime(month.year, month.month);
+      _showMonthSelection = false;
+      _showYearSelection = false;
     });
 
     if ((_pageController.hasClients)) {
@@ -128,131 +143,298 @@ class _CustomCalendarState extends State<CustomCalendar> {
     }
   }
 
-  void _handleMonthYearTap() async {
-    final selected = await showDialog<DateTime>(
-      context: context,
-      builder: (context) {
-        int tempYear = _currentMonth.year;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            const monthLabels = [
-              'Январь',
-              'Февраль',
-              'Март',
-              'Апрель',
-              'Май',
-              'Июнь',
-              'Июль',
-              'Август',
-              'Сентябрь',
-              'Октябрь',
-              'Ноябрь',
-              'Декабрь'
-            ];
-
-            return AlertDialog(
-              title: const Text('Выберите месяц и год'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: 180,
-                      child: YearPicker(
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                        initialDate: DateTime(tempYear),
-                        selectedDate: DateTime(tempYear),
-                        onChanged: (date) {
-                          setModalState(() => tempYear = date.year);
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 220,
-                      child: ListView.separated(
-                        itemCount: monthLabels.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 4),
-                        itemBuilder: (context, index) {
-                          final month = index + 1;
-                          final isSelected =
-                              month == _currentMonth.month && tempYear == _currentMonth.year;
-                          final isTodayMonth =
-                              month == widget.today.month && tempYear == widget.today.year;
-
-                          final textColor = isSelected
-                              ? const Color(0xFF1D4ED8)
-                              : Colors.black.withOpacity(0.85);
-
-                          return Material(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            clipBehavior: Clip.antiAlias,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () =>
-                                  Navigator.of(context).pop(DateTime(tempYear, month)),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFFEEF2FF) : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isTodayMonth
-                                        ? const Color(0xFF4F46E5)
-                                        : Colors.transparent,
-                                    width: 1.2,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        monthLabels[index],
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontSize: 16,
-                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Отмена'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (selected != null) {
-      _animateToMonth(selected);
-    }
-  }
-
   bool _isToday(DateTime date) {
     return date.year == widget.today.year &&
         date.month == widget.today.month &&
         date.day == widget.today.day;
+  }
+
+  void _toggleMonthSelection() {
+    setState(() {
+      if (_showMonthSelection) {
+        _showMonthSelection = false;
+      } else {
+        _showMonthSelection = true;
+        _showYearSelection = false;
+      }
+    });
+  }
+
+  void _toggleYearSelection() {
+    setState(() {
+      if (_showYearSelection) {
+        _showYearSelection = false;
+      } else {
+        _showYearSelection = true;
+        _showMonthSelection = false;
+      }
+    });
+
+    if (_showYearSelection) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final target = _yearToOffset(_currentMonth.year);
+        if (_yearScrollController.hasClients) {
+          final min = _yearScrollController.position.minScrollExtent;
+          final max = _yearScrollController.position.maxScrollExtent;
+          final offset = target.clamp(min, max);
+          _yearScrollController.animateTo(
+            offset,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
+    }
+  }
+
+  void _selectMonth(int month) {
+    _animateToMonth(DateTime(_currentMonth.year, month));
+  }
+
+  void _selectYear(int year) {
+    _animateToMonth(DateTime(year, _currentMonth.month));
+  }
+
+  Widget _buildSelectorChip({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    final Color activeColor = const Color(0xFF4F46E5);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFEEF2FF) : const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isActive ? activeColor : Colors.transparent,
+              width: 1.4,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? activeColor : Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                isActive ? Icons.expand_less : Icons.expand_more,
+                size: 18,
+                color: isActive ? activeColor : Colors.black54,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthSelection() {
+    const monthLabels = [
+      'Январь',
+      'Февраль',
+      'Март',
+      'Апрель',
+      'Май',
+      'Июнь',
+      'Июль',
+      'Август',
+      'Сентябрь',
+      'Октябрь',
+      'Ноябрь',
+      'Декабрь'
+    ];
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final double itemWidth = (constraints.maxWidth - 16) / 3;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Выбор месяца',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(12, (index) {
+                  final month = index + 1;
+                  final isSelected = month == _currentMonth.month;
+                  final isTodayMonth =
+                      month == widget.today.month && _currentMonth.year == widget.today.year;
+
+                  return SizedBox(
+                    width: itemWidth,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => _selectMonth(month),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected ? const Color(0xFFEEF2FF) : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isTodayMonth
+                                  ? const Color(0xFF2563EB)
+                                  : Colors.transparent,
+                              width: 1.3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              monthLabels[index],
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected
+                                    ? const Color(0xFF1D4ED8)
+                                    : Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildYearSelection() {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Выбор года',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 196,
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: ListView.builder(
+                controller: _yearScrollController,
+                itemExtent: _yearItemExtent,
+                itemCount: _lastYear - _baseYear + 1,
+                itemBuilder: (context, index) {
+                  final year = _baseYear + index;
+                  final isSelected = year == _currentMonth.year;
+                  final isTodayYear = year == widget.today.year;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => _selectYear(year),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFFEEF2FF) : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isTodayYear
+                                  ? const Color(0xFF2563EB)
+                                  : Colors.transparent,
+                              width: 1.3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '$year',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight:
+                                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected
+                                    ? const Color(0xFF1D4ED8)
+                                    : Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectionPanel() {
+    if (_showMonthSelection) {
+      return _buildMonthSelection();
+    }
+    if (_showYearSelection) {
+      return _buildYearSelection();
+    }
+    return const SizedBox.shrink();
   }
 
   @override
@@ -280,21 +462,42 @@ class _CustomCalendarState extends State<CustomCalendar> {
         return Column(
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 IconButton(
                   onPressed: _previousMonth,
                   icon: const Icon(Icons.chevron_left),
                 ),
-                InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: _handleMonthYearTap,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Text(
-                      '${monthNames[_currentMonth.month - 1]} ${_currentMonth.year}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Выберите месяц или год',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildSelectorChip(
+                            label: monthNames[_currentMonth.month - 1],
+                            isActive: _showMonthSelection,
+                            onTap: _toggleMonthSelection,
+                          ),
+                          _buildSelectorChip(
+                            label: '${_currentMonth.year}',
+                            isActive: _showYearSelection,
+                            onTap: _toggleYearSelection,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
                 IconButton(
@@ -302,6 +505,12 @@ class _CustomCalendarState extends State<CustomCalendar> {
                   icon: const Icon(Icons.chevron_right),
                 ),
               ],
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              vsync: this,
+              child: _buildSelectionPanel(),
             ),
             const SizedBox(height: 12),
             Row(
@@ -330,6 +539,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
                 onPageChanged: (index) {
                   setState(() {
                     _currentMonth = _pageToMonth(index);
+                    _showMonthSelection = false;
+                    _showYearSelection = false;
                   });
                 },
                 itemBuilder: (context, index) {
