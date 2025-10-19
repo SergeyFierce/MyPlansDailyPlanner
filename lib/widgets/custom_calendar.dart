@@ -221,11 +221,6 @@ class _CustomCalendarState extends State<CustomCalendar> {
                                         ),
                                       ),
                                     ),
-                                    if (isTodayMonth)
-                                      const Icon(
-                                        Icons.today,
-                                        color: Color(0xFF4F46E5),
-                                      ),
                                   ],
                                 ),
                               ),
