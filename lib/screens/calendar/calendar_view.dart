@@ -190,78 +190,87 @@ class CalendarView extends StatelessWidget {
                         ],
                       ),
                       ClipRect(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 280),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          transitionBuilder: (child, anim) {
-                            return FadeTransition(
-                              opacity: anim,
-                              child: SizeTransition(
-                                sizeFactor: anim,
-                                axis: Axis.vertical,
-                                axisAlignment: -1.0,
+                        child: AnimatedSize(
+                          duration: const Duration(milliseconds: 360),
+                          curve: Curves.easeInOutCubic,
+                          alignment: Alignment.topCenter,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 220),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            transitionBuilder: (child, anim) {
+                              return FadeTransition(
+                                opacity: anim,
                                 child: child,
-                              ),
-                            );
-                          },
-                          child: isExpanded
-                              ? Column(
-                                  key: const ValueKey('expanded'),
-                                  children: [
-                                    if (importantTodayTasks.isNotEmpty) ...[
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: SegmentedButton(
-                                              label: 'Все дела',
-                                              selected: !showOnlyImportant,
-                                              onTap: !showOnlyImportant ? null : onToggleShowImportant,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: SegmentedButton(
-                                              label: 'Только важные',
-                                              selected: showOnlyImportant,
-                                              onTap: showOnlyImportant ? null : onToggleShowImportant,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                    const SizedBox(height: 16),
-                                    if (displayedTasks.isEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade100,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          children: const [
-                                            Icon(Icons.inbox, color: Colors.grey),
-                                            SizedBox(width: 12),
+                              );
+                            },
+                            layoutBuilder: (currentChild, previousChildren) {
+                              return Stack(
+                                alignment: Alignment.topCenter,
+                                children: [
+                                  ...previousChildren,
+                                  if (currentChild != null) currentChild,
+                                ],
+                              );
+                            },
+                            child: isExpanded
+                                ? Column(
+                                    key: const ValueKey('expanded'),
+                                    children: [
+                                      if (importantTodayTasks.isNotEmpty) ...[
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
                                             Expanded(
-                                              child: Text(
-                                                'На сегодня задач нет',
-                                                style: TextStyle(color: Colors.grey),
+                                              child: SegmentedButton(
+                                                label: 'Все дела',
+                                                selected: !showOnlyImportant,
+                                                onTap: !showOnlyImportant ? null : onToggleShowImportant,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: SegmentedButton(
+                                                label: 'Только важные',
+                                                selected: showOnlyImportant,
+                                                onTap: showOnlyImportant ? null : onToggleShowImportant,
                                               ),
                                             ),
                                           ],
                                         ),
-                                      )
-                                    else
-                                      TaskList(
-                                        tasks: displayedTasks,
-                                        onTaskClick: onTaskClick,
-                                        onUpdateTask: onUpdateTask,
-                                        onDeleteTask: onDeleteTask,
-                                      ),
-                                  ],
-                                )
-                              : const SizedBox.shrink(),
+                                      ],
+                                      const SizedBox(height: 16),
+                                      if (displayedTasks.isEmpty)
+                                        Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade100,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            children: const [
+                                              Icon(Icons.inbox, color: Colors.grey),
+                                              SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  'На сегодня задач нет',
+                                                  style: TextStyle(color: Colors.grey),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      else
+                                        TaskList(
+                                          tasks: displayedTasks,
+                                          onTaskClick: onTaskClick,
+                                          onUpdateTask: onUpdateTask,
+                                          onDeleteTask: onDeleteTask,
+                                        ),
+                                    ],
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
                         ),
                       ),
                     ],
