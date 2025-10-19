@@ -136,18 +136,18 @@ class _CustomCalendarState extends State<CustomCalendar> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             const monthLabels = [
-              'Янв',
-              'Фев',
-              'Мар',
-              'Апр',
+              'Январь',
+              'Февраль',
+              'Март',
+              'Апрель',
               'Май',
-              'Июн',
-              'Июл',
-              'Авг',
-              'Сен',
-              'Окт',
-              'Ноя',
-              'Дек'
+              'Июнь',
+              'Июль',
+              'Август',
+              'Сентябрь',
+              'Октябрь',
+              'Ноябрь',
+              'Декабрь'
             ];
 
             return AlertDialog(

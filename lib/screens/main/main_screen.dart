@@ -139,18 +139,26 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFEFF6FF), Color(0xFFEEF2FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return WillPopScope(
+      onWillPop: () async {
+        if (_activeView == ActiveView.schedule) {
+          _handleBackToCalendar();
+          return false;
+        }
+        return true;
+      },
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFEFF6FF), Color(0xFFEEF2FF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
+        child: SafeArea(
+          bottom: false,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
             body: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               switchInCurve: Curves.easeOut,
@@ -205,8 +213,8 @@ class _MainScreenState extends State<MainScreen> {
                 onDeleteTask: _handleDeleteTask,
                 onBack: _handleBackToCalendar,
               ),
-            )
-
+            ),
+          ),
         ),
       ),
     );
