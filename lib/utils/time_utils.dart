@@ -21,3 +21,24 @@ int minutesFromTime(String value) {
   if (time == null) return 0;
   return time.hour * 60 + time.minute;
 }
+
+TimeOfDay addMinutes(TimeOfDay time, int minutes) {
+  final totalMinutes = time.hour * 60 + time.minute + minutes;
+  final clampedMinutes = totalMinutes.clamp(0, 23 * 60 + 59) as int;
+  final hour = clampedMinutes ~/ 60;
+  final minute = clampedMinutes % 60;
+  return TimeOfDay(hour: hour, minute: minute);
+}
+
+bool isEndAfterStart(TimeOfDay start, TimeOfDay end) {
+  if (end.hour > start.hour) return true;
+  if (end.hour == start.hour && end.minute > start.minute) return true;
+  return false;
+}
+
+String formatTimeLabel(String start, String end) {
+  if (start == end) {
+    return start;
+  }
+  return '$start – $end';
+}

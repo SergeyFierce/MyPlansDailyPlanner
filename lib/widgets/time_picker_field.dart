@@ -9,11 +9,13 @@ class TimePickerField extends StatefulWidget {
     required this.label,
     required this.initialTime,
     required this.onTimeChanged,
+    this.enabled = true,
   });
 
   final String label;
   final TimeOfDay initialTime;
   final ValueChanged<TimeOfDay> onTimeChanged;
+  final bool enabled;
 
   @override
   State<TimePickerField> createState() => _TimePickerFieldState();
@@ -110,7 +112,8 @@ class _TimePickerFieldState extends State<TimePickerField> {
     return TextFormField(
       controller: _controller,
       readOnly: true,
-      onTap: _openPicker,
+      enabled: widget.enabled,
+      onTap: widget.enabled ? _openPicker : null,
       decoration: InputDecoration(
         labelText: widget.label,
         suffixIcon: const Icon(Icons.access_time),
