@@ -170,33 +170,41 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: List.generate(monthLabels.length, (index) {
-                        final month = index + 1;
-                        final isSelected =
-                            month == _currentMonth.month && tempYear == _currentMonth.year;
-                        final isTodayMonth =
-                            month == widget.today.month && tempYear == widget.today.year;
-                        return ChoiceChip(
-                          label: Text(monthLabels[index]),
-                          selected: isSelected,
-                          selectedColor: const Color(0xFFEEF2FF),
-                          onSelected: (_) {
-                            Navigator.of(context).pop(DateTime(tempYear, month));
-                          },
-                          shape: StadiumBorder(
-                            side: BorderSide(
-                              color: isTodayMonth ? const Color(0xFF4F46E5) : Colors.transparent,
-                              width: 1.5,
+                    SizedBox(
+                      height: 220,
+                      child: ListView.separated(
+                        itemCount: monthLabels.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 4),
+                        itemBuilder: (context, index) {
+                          final month = index + 1;
+                          final isSelected =
+                              month == _currentMonth.month && tempYear == _currentMonth.year;
+                          final isTodayMonth =
+                              month == widget.today.month && tempYear == widget.today.year;
+                          return ListTile(
+                            title: Text(monthLabels[index]),
+                            onTap: () =>
+                                Navigator.of(context).pop(DateTime(tempYear, month)),
+                            selected: isSelected,
+                            selectedTileColor: const Color(0xFFEEF2FF),
+                            trailing: isTodayMonth
+                                ? const Icon(
+                                    Icons.today,
+                                    color: Color(0xFF4F46E5),
+                                  )
+                                : null,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color:
+                                    isTodayMonth ? const Color(0xFF4F46E5) : Colors.transparent,
+                                width: 1.2,
+                              ),
                             ),
-                          ),
-                          labelStyle: TextStyle(
-                            color: isSelected ? const Color(0xFF1D4ED8) : null,
-                          ),
-                        );
-                      }),
+                            selectedColor: const Color(0xFF1D4ED8),
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
