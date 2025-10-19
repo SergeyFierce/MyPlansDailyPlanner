@@ -41,6 +41,58 @@ class CalendarView extends StatefulWidget {
 }
 
 class _CalendarViewState extends State<CalendarView> with TickerProviderStateMixin {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _todayCardKey = GlobalKey();
+  double? _collapsedScrollOffset;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(CalendarView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!oldWidget.isExpanded && widget.isExpanded) {
+      if (_scrollController.hasClients) {
+        _collapsedScrollOffset = _scrollController.offset;
+      }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final context = _todayCardKey.currentContext;
+        if (context == null) {
+          return;
+        }
+
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.0,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+        );
+      });
+    } else if (oldWidget.isExpanded && !widget.isExpanded) {
+      final targetOffset = _collapsedScrollOffset;
+      _collapsedScrollOffset = null;
+
+      if (targetOffset != null && _scrollController.hasClients) {
+        final position = _scrollController.position;
+        final minExtent = position.minScrollExtent;
+        final maxExtent = position.maxScrollExtent;
+        final clampedOffset = targetOffset.clamp(minExtent, maxExtent);
+
+        _scrollController.animateTo(
+          clampedOffset,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
+  }
+
   List<ScheduleTask> _getTasksForDate(DateTime date) {
     return widget.scheduleTasks
         .where(
@@ -102,6 +154,7 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
     final cardShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(20));
 
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.all(24),
       child: Center(
         child: ConstrainedBox(
@@ -142,6 +195,7 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
               ),
               const SizedBox(height: 24),
               Card(
+                key: _todayCardKey,
                 color: cardColor,
                 elevation: cardElevation,
                 shadowColor: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
