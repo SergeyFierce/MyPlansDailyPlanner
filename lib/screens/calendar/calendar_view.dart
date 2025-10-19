@@ -41,6 +41,38 @@ class CalendarView extends StatefulWidget {
 }
 
 class _CalendarViewState extends State<CalendarView> with TickerProviderStateMixin {
+  late final ScrollController _scrollController;
+  final _todayCardKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void didUpdateWidget(covariant CalendarView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isExpanded != widget.isExpanded && _todayCardKey.currentContext != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final context = _todayCardKey.currentContext;
+        if (context != null) {
+          Scrollable.ensureVisible(
+            context,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   List<ScheduleTask> _getTasksForDate(DateTime date) {
     return widget.scheduleTasks
         .where(
@@ -102,6 +134,7 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
     final cardShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(20));
 
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.all(24),
       child: Center(
         child: ConstrainedBox(
@@ -142,6 +175,7 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
               ),
               const SizedBox(height: 24),
               Card(
+                key: _todayCardKey,
                 color: cardColor,
                 elevation: cardElevation,
                 shadowColor: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
