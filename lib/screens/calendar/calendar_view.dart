@@ -181,106 +181,68 @@ class CalendarView extends StatelessWidget {
                             style: IconButton.styleFrom(
                               foregroundColor: const Color(0xFF4F46E5),
                             ),
-                            icon: AnimatedRotation(
-                              turns: isExpanded ? 0.5 : 0,
-                              duration: const Duration(milliseconds: 200),
+                            icon: RotatedBox(
+                              quarterTurns: isExpanded ? 2 : 0,
                               child: const Icon(Icons.expand_more),
                             ),
                           ),
                         ],
                       ),
-                      ClipRect(
-                        child: AnimatedSize(
-                          duration: const Duration(milliseconds: 700),
-                          curve: Curves.easeInOutCubic,
-                          alignment: Alignment.center,
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 350),
-                            transitionBuilder: (child, animation) {
-                              final curvedAnimation = CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOutCubic,
-                                reverseCurve: Curves.easeInCubic,
-                              );
-
-                              return FadeTransition(
-                                opacity: curvedAnimation,
-                                child: SizeTransition(
-                                  sizeFactor: curvedAnimation,
-                                  axisAlignment: 0.0,
-                                  child: child,
-                                ),
-                              );
-                            },
-                            layoutBuilder: (currentChild, previousChildren) {
-                              return Stack(
-                                alignment: Alignment.topCenter,
+                      if (isExpanded)
+                        Column(
+                          children: [
+                            if (importantTodayTasks.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Row(
                                 children: [
-                                  ...previousChildren,
-                                  if (currentChild != null) currentChild,
+                                  Expanded(
+                                    child: SegmentedButton(
+                                      label: 'Все дела',
+                                      selected: !showOnlyImportant,
+                                      onTap: !showOnlyImportant ? null : onToggleShowImportant,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: SegmentedButton(
+                                      label: 'Только важные',
+                                      selected: showOnlyImportant,
+                                      onTap: showOnlyImportant ? null : onToggleShowImportant,
+                                    ),
+                                  ),
                                 ],
-                              );
-                            },
-                            child: isExpanded
-                                ? Column(
-                                    key: const ValueKey('expanded'),
-                                    children: [
-                                      if (importantTodayTasks.isNotEmpty) ...[
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: SegmentedButton(
-                                                label: 'Все дела',
-                                                selected: !showOnlyImportant,
-                                                onTap: !showOnlyImportant ? null : onToggleShowImportant,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: SegmentedButton(
-                                                label: 'Только важные',
-                                                selected: showOnlyImportant,
-                                                onTap: showOnlyImportant ? null : onToggleShowImportant,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                      const SizedBox(height: 16),
-                                      if (displayedTasks.isEmpty)
-                                        Container(
-                                          padding: const EdgeInsets.all(16),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey.shade100,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Row(
-                                            children: const [
-                                              Icon(Icons.inbox, color: Colors.grey),
-                                              SizedBox(width: 12),
-                                              Expanded(
-                                                child: Text(
-                                                  'На сегодня задач нет',
-                                                  style: TextStyle(color: Colors.grey),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      else
-                                        TaskList(
-                                          tasks: displayedTasks,
-                                          onTaskClick: onTaskClick,
-                                          onUpdateTask: onUpdateTask,
-                                          onDeleteTask: onDeleteTask,
-                                        ),
-                                    ],
-                                  )
-                                : const SizedBox.shrink(),
-                          ),
+                              ),
+                            ],
+                            const SizedBox(height: 16),
+                            if (displayedTasks.isEmpty)
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.inbox, color: Colors.grey),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'На сегодня задач нет',
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              TaskList(
+                                tasks: displayedTasks,
+                                onTaskClick: onTaskClick,
+                                onUpdateTask: onUpdateTask,
+                                onDeleteTask: onDeleteTask,
+                              ),
+                          ],
                         ),
-                      ),
                     ],
                   ),
                 ),
