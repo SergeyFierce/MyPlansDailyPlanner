@@ -191,11 +191,11 @@ class CalendarView extends StatelessWidget {
                       ),
                       ClipRect(
                         child: AnimatedSize(
-                          duration: const Duration(milliseconds: 360),
+                          duration: const Duration(milliseconds: 700),
                           curve: Curves.easeInOutCubic,
                           alignment: Alignment.topCenter,
                           child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
+                            duration: const Duration(milliseconds: 350),
                             switchInCurve: Curves.easeOutCubic,
                             switchOutCurve: Curves.easeInCubic,
                             transitionBuilder: (child, anim) {

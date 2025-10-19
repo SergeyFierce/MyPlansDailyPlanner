@@ -151,50 +151,62 @@ class _MainScreenState extends State<MainScreen> {
         bottom: false,
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          body: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, anim) {
-              final isCalendar = (child.key as ValueKey?)?.value == 'calendar';
-              final offset = isCalendar ? const Offset(-0.05, 0) : const Offset(0.05, 0);
-              return FadeTransition(
-                opacity: anim,
-                child: SlideTransition(
-                  position: Tween<Offset>(begin: offset, end: Offset.zero).animate(anim),
-                  child: child,
-                ),
-              );
-            },
-            child: _activeView == ActiveView.calendar
-                ? CalendarView(
-                    key: const ValueKey('calendar'),
-                    selectedDate: _selectedDate,
-                    today: _today,
-                    scheduleTasks: _scheduleTasks,
-                    showOnlyImportant: _showOnlyImportant,
-                    isExpanded: _isExpanded,
-                    onDateClick: _handleDateClick,
-                    onTaskClick: _handleTaskClick,
-                    onUpdateTask: _handleUpdateTask,
-                    onDeleteTask: _handleDeleteTask,
-                    onToggleExpanded: () => setState(() => _isExpanded = !_isExpanded),
-                    onToggleShowImportant:
-                        () => setState(() => _showOnlyImportant = !_showOnlyImportant),
-                  )
-                : DayScheduleView(
-                    key: const ValueKey('schedule'),
-                    selectedDate: _selectedDate,
-                    tasks: _getTasksForDate(_selectedDate),
-                    scrollToTaskId: _scrollToTaskId,
-                    onAddTask: (task) => _handleAddTask(
-                      task.copyWith(date: _selectedDate),
-                    ),
-                    onUpdateTask: _handleUpdateTask,
-                    onDeleteTask: _handleDeleteTask,
-                    onBack: _handleBackToCalendar,
+            body: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+
+              // ВАЖНО: растягиваем текущего и предыдущих детей на весь доступный размер
+              layoutBuilder: (currentChild, previousChildren) {
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ...previousChildren,
+                    if (currentChild != null) currentChild,
+                  ],
+                );
+              },
+
+              transitionBuilder: (child, anim) {
+                final isCalendar = (child.key as ValueKey?)?.value == 'calendar';
+                final offset = isCalendar ? const Offset(-0.05, 0) : const Offset(0.05, 0);
+                return FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: Tween<Offset>(begin: offset, end: Offset.zero).animate(anim),
+                    child: child,
                   ),
-          ),
+                );
+              },
+
+              child: _activeView == ActiveView.calendar
+                  ? CalendarView(
+                key: const ValueKey('calendar'),
+                selectedDate: _selectedDate,
+                today: _today,
+                scheduleTasks: _scheduleTasks,
+                showOnlyImportant: _showOnlyImportant,
+                isExpanded: _isExpanded,
+                onDateClick: _handleDateClick,
+                onTaskClick: _handleTaskClick,
+                onUpdateTask: _handleUpdateTask,
+                onDeleteTask: _handleDeleteTask,
+                onToggleExpanded: () => setState(() => _isExpanded = !_isExpanded),
+                onToggleShowImportant: () =>
+                    setState(() => _showOnlyImportant = !_showOnlyImportant),
+              )
+                  : DayScheduleView(
+                key: const ValueKey('schedule'),
+                selectedDate: _selectedDate,
+                tasks: _getTasksForDate(_selectedDate),
+                scrollToTaskId: _scrollToTaskId,
+                onAddTask: (task) => _handleAddTask(task.copyWith(date: _selectedDate)),
+                onUpdateTask: _handleUpdateTask,
+                onDeleteTask: _handleDeleteTask,
+                onBack: _handleBackToCalendar,
+              ),
+            )
+
         ),
       ),
     );
