@@ -181,15 +181,18 @@ class CalendarView extends StatelessWidget {
                             style: IconButton.styleFrom(
                               foregroundColor: const Color(0xFF4F46E5),
                             ),
-                            icon: RotatedBox(
-                              quarterTurns: isExpanded ? 2 : 0,
+                            icon: AnimatedRotation(
+                              turns: isExpanded ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
                               child: const Icon(Icons.expand_more),
                             ),
                           ),
                         ],
                       ),
-                      if (isExpanded)
-                        Column(
+                      AnimatedCrossFade(
+                        firstChild: const SizedBox.shrink(),
+                        secondChild: Column(
                           children: [
                             if (importantTodayTasks.isNotEmpty) ...[
                               const SizedBox(height: 12),
@@ -214,35 +217,56 @@ class CalendarView extends StatelessWidget {
                               ),
                             ],
                             const SizedBox(height: 16),
-                            if (displayedTasks.isEmpty)
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(12),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              switchInCurve: Curves.easeInOut,
+                              switchOutCurve: Curves.easeInOut,
+                              transitionBuilder: (child, animation) => FadeTransition(
+                                opacity: animation,
+                                child: SizeTransition(
+                                  sizeFactor: animation,
+                                  axisAlignment: -1.0,
+                                  child: child,
                                 ),
-                                child: Row(
-                                  children: const [
-                                    Icon(Icons.inbox, color: Colors.grey),
-                                    SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        'На сегодня задач нет',
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            else
-                              TaskList(
-                                tasks: displayedTasks,
-                                onTaskClick: onTaskClick,
-                                onUpdateTask: onUpdateTask,
-                                onDeleteTask: onDeleteTask,
                               ),
+                              child: displayedTasks.isEmpty
+                                  ? Container(
+                                      key: ValueKey('empty_${showOnlyImportant ? 'important' : 'all'}'),
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: const [
+                                          Icon(Icons.inbox, color: Colors.grey),
+                                          SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              'На сегодня задач нет',
+                                              style: TextStyle(color: Colors.grey),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : TaskList(
+                                      key: ValueKey(showOnlyImportant ? 'important' : 'all'),
+                                      tasks: displayedTasks,
+                                      onTaskClick: onTaskClick,
+                                      onUpdateTask: onUpdateTask,
+                                      onDeleteTask: onDeleteTask,
+                                    ),
+                            ),
                           ],
                         ),
+                        crossFadeState: isExpanded
+                            ? CrossFadeState.showSecond
+                            : CrossFadeState.showFirst,
+                        duration: const Duration(milliseconds: 300),
+                        sizeCurve: Curves.easeInOut,
+                        alignment: Alignment.topCenter,
+                      ),
                     ],
                   ),
                 ),

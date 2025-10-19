@@ -14,20 +14,40 @@ class SegmentedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
-    return OutlinedButton(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        shape: border,
-        side: BorderSide(
-          color: selected ? const Color(0xFF4F46E5) : const Color(0x334F46E5),
-          width: 1.2,
+    const animationDuration = Duration(milliseconds: 220);
+    const primaryColor = Color(0xFF4F46E5);
+    final borderRadius = BorderRadius.circular(8);
+
+    final backgroundColor = selected ? primaryColor : Colors.transparent;
+    final borderColor = selected ? primaryColor : primaryColor.withOpacity(0.2);
+    final textColor = selected ? Colors.white : primaryColor;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: borderRadius,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: animationDuration,
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: borderRadius,
+            border: Border.all(color: borderColor, width: 1.2),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          alignment: Alignment.center,
+          child: AnimatedDefaultTextStyle(
+            duration: animationDuration,
+            curve: Curves.easeInOut,
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+            ),
+            child: Text(label),
+          ),
         ),
-        foregroundColor: selected ? Colors.white : const Color(0xFF4F46E5),
-        backgroundColor: selected ? const Color(0xFF4F46E5) : Colors.transparent,
-        padding: const EdgeInsets.symmetric(vertical: 12),
       ),
-      child: Text(label),
     );
   }
 }
