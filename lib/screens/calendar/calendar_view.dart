@@ -197,72 +197,76 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
                         ],
                       ),
                       ClipRect(
-                        child: AnimatedSize(
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeInOut,
-                          alignment: Alignment.topCenter,
-                          vsync: this,
-                          child: widget.isExpanded
-                              ? Column(
-                                  children: [
-                                    if (importantTodayTasks.isNotEmpty) ...[
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: SegmentedButton(
-                                              label: 'Все дела',
-                                              selected: !widget.showOnlyImportant,
-                                              onTap: !widget.showOnlyImportant
-                                                  ? null
-                                                  : widget.onToggleShowImportant,
-                                            ),
+                        child: ClipRect(
+                          child: AnimatedSize(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                            alignment: Alignment.topCenter,
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              // 1.0 — развернуто, 0.0 — свернуто, контент всегда в дереве
+                              heightFactor: widget.isExpanded ? 1.0 : 0.0,
+                              child: Column(
+                                children: [
+                                  if (importantTodayTasks.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: SegmentedButton(
+                                            label: 'Все дела',
+                                            selected: !widget.showOnlyImportant,
+                                            onTap: !widget.showOnlyImportant
+                                                ? null
+                                                : widget.onToggleShowImportant,
                                           ),
-                                          const SizedBox(width: 8),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: SegmentedButton(
+                                            label: 'Только важные',
+                                            selected: widget.showOnlyImportant,
+                                            onTap: widget.showOnlyImportant
+                                                ? null
+                                                : widget.onToggleShowImportant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                  const SizedBox(height: 16),
+                                  if (displayedTasks.isEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: const [
+                                          Icon(Icons.inbox, color: Colors.grey),
+                                          SizedBox(width: 12),
                                           Expanded(
-                                            child: SegmentedButton(
-                                              label: 'Только важные',
-                                              selected: widget.showOnlyImportant,
-                                              onTap: widget.showOnlyImportant
-                                                  ? null
-                                                  : widget.onToggleShowImportant,
+                                            child: Text(
+                                              'На сегодня задач нет',
+                                              style: TextStyle(color: Colors.grey),
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ],
-                                    const SizedBox(height: 16),
-                                    if (displayedTasks.isEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade100,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          children: const [
-                                            Icon(Icons.inbox, color: Colors.grey),
-                                            SizedBox(width: 12),
-                                            Expanded(
-                                              child: Text(
-                                                'На сегодня задач нет',
-                                                style: TextStyle(color: Colors.grey),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    else
-                                      TaskList(
-                                        tasks: displayedTasks,
-                                        onTaskClick: widget.onTaskClick,
-                                        onUpdateTask: widget.onUpdateTask,
-                                        onDeleteTask: widget.onDeleteTask,
-                                      ),
-                                  ],
-                                )
-                              : const SizedBox.shrink(),
-                        ),
+                                    )
+                                  else
+                                    TaskList(
+                                      tasks: displayedTasks,
+                                      onTaskClick: widget.onTaskClick,
+                                      onUpdateTask: widget.onUpdateTask,
+                                      onDeleteTask: widget.onDeleteTask,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
                       ),
                     ],
                   ),
