@@ -15,8 +15,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   ActiveView _activeView = ActiveView.calendar;
-  DateTime _selectedDate = DateTime(2025, 10, 16);
   final DateTime _today = DateTime(2025, 10, 16);
+  late DateTime _selectedDate;
   bool _showOnlyImportant = false;
   bool _isExpanded = false;
   int? _scrollToTaskId;
@@ -61,6 +61,12 @@ class _MainScreenState extends State<MainScreen> {
       date: DateTime(2025, 10, 18),
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = _today;
+  }
 
   List<ScheduleTask> _getTasksForDate(DateTime date) {
     return _scheduleTasks
