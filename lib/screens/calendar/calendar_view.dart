@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Badge, SegmentedButton;
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 
 import '../../models/formatted_date.dart';
 import '../../models/task.dart';
@@ -6,7 +7,6 @@ import '../../widgets/badge.dart';
 import '../../widgets/custom_calendar.dart';
 import '../../widgets/segmented_button.dart';
 import '../../widgets/task_list.dart';
-
 
 class CalendarView extends StatefulWidget {
   const CalendarView({
@@ -45,10 +45,39 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
   final GlobalKey _todayCardKey = GlobalKey();
   double? _collapsedScrollOffset;
 
+  // Флаг: нужно ли выполнить скролл после завершения AnimatedSize
+  bool _pendingScrollOnExpand = false;
+
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // Точный автоскролл карточки "Сегодня" к верху вьюпорта
+  void _scrollTodayCardToTop() {
+    if (!_scrollController.hasClients) return;
+    final ctx = _todayCardKey.currentContext;
+    if (ctx == null) return;
+
+    final renderObject = ctx.findRenderObject();
+    if (renderObject == null) return;
+
+    final viewport = RenderAbstractViewport.of(renderObject);
+    if (viewport == null) return;
+
+    // 0.0 — выровнять верх виджета по верху вьюпорта
+    final targetOffset = viewport.getOffsetToReveal(renderObject, 0.0).offset;
+
+    final pos = _scrollController.position;
+    final clamped =
+    targetOffset.clamp(pos.minScrollExtent, pos.maxScrollExtent);
+
+    _scrollController.animateTo(
+      clamped,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -56,36 +85,25 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
     super.didUpdateWidget(oldWidget);
 
     if (!oldWidget.isExpanded && widget.isExpanded) {
+      // Запоминаем позицию перед раскрытием
       if (_scrollController.hasClients) {
         _collapsedScrollOffset = _scrollController.offset;
       }
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final context = _todayCardKey.currentContext;
-        if (context == null) {
-          return;
-        }
-
-        Scrollable.ensureVisible(
-          context,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          alignment: 0.0,
-          alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
-        );
-      });
+      // Скролл выполним после завершения AnimatedSize (см. onEnd)
+      _pendingScrollOnExpand = true;
     } else if (oldWidget.isExpanded && !widget.isExpanded) {
+      // Возвращаемся на место, где были до раскрытия
       final targetOffset = _collapsedScrollOffset;
       _collapsedScrollOffset = null;
 
       if (targetOffset != null && _scrollController.hasClients) {
         final position = _scrollController.position;
-        final minExtent = position.minScrollExtent;
-        final maxExtent = position.maxScrollExtent;
-        final clampedOffset = targetOffset.clamp(minExtent, maxExtent);
-
+        final clamped = targetOffset.clamp(
+          position.minScrollExtent,
+          position.maxScrollExtent,
+        );
         _scrollController.animateTo(
-          clampedOffset,
+          clamped,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
@@ -97,10 +115,10 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
     return widget.scheduleTasks
         .where(
           (task) =>
-              task.date.year == date.year &&
-              task.date.month == date.month &&
-              task.date.day == date.day,
-        )
+      task.date.year == date.year &&
+          task.date.month == date.month &&
+          task.date.day == date.day,
+    )
         .toList();
   }
 
@@ -140,10 +158,12 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     final todayTasks = _getTasksForDate(widget.today);
-    final importantTodayTasks = todayTasks.where((task) => task.isImportant).toList();
-    final completedTodayTasks = todayTasks.where((task) => task.isCompleted).toList();
+    final importantTodayTasks =
+    todayTasks.where((task) => task.isImportant).toList();
+    final completedTodayTasks =
+    todayTasks.where((task) => task.isCompleted).toList();
     final displayedTasks =
-        widget.showOnlyImportant ? importantTodayTasks : todayTasks;
+    widget.showOnlyImportant ? importantTodayTasks : todayTasks;
 
     final todayFormatted = _formatDate(widget.today);
 
@@ -151,7 +171,8 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
     final isLightTheme = theme.brightness == Brightness.light;
     final cardColor = isLightTheme ? Colors.white : theme.cardColor;
     final cardElevation = isLightTheme ? 6.0 : 2.0;
-    final cardShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(20));
+    final cardShape =
+    RoundedRectangleBorder(borderRadius: BorderRadius.circular(20));
 
     return SingleChildScrollView(
       controller: _scrollController,
@@ -178,7 +199,8 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
               Card(
                 color: cardColor,
                 elevation: cardElevation,
-                shadowColor: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
+                shadowColor:
+                Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
                 shape: cardShape,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -198,7 +220,8 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
                 key: _todayCardKey,
                 color: cardColor,
                 elevation: cardElevation,
-                shadowColor: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
+                shadowColor:
+                Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
                 shape: cardShape,
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -207,7 +230,8 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
                     children: [
                       Text(
                         'Сегодня · ${todayFormatted.day} ${todayFormatted.month}, ${todayFormatted.dayName}',
-                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                        style:
+                        const TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -220,7 +244,8 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
                               children: [
                                 Text(
                                   'Всего дел: ${todayTasks.length}',
-                                  style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                  style: const TextStyle(
+                                      fontSize: 14, color: Colors.black87),
                                 ),
                                 if (completedTodayTasks.isNotEmpty)
                                   Text(
@@ -230,10 +255,12 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
                                       color: Color(0xFF16A34A),
                                     ),
                                   ),
-                                if (importantTodayTasks.isNotEmpty) const SizedBox(width: 4),
+                                if (importantTodayTasks.isNotEmpty)
+                                  const SizedBox(width: 4),
                                 if (importantTodayTasks.isNotEmpty)
                                   Badge.destructive(
-                                    text: '${importantTodayTasks.length} важных',
+                                    text:
+                                    '${importantTodayTasks.length} важных',
                                   ),
                               ],
                             ),
@@ -251,76 +278,81 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
                         ],
                       ),
                       ClipRect(
-                        child: ClipRect(
-                          child: AnimatedSize(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
+                        child: AnimatedSize(
+                          duration: const Duration(milliseconds: 550),
+                          curve: Curves.easeInOut,
+                          alignment: Alignment.topCenter,
+                          onEnd: () {
+                            if (widget.isExpanded && _pendingScrollOnExpand) {
+                              _pendingScrollOnExpand = false;
+                              _scrollTodayCardToTop();
+                            }
+                          },
+                          child: Align(
                             alignment: Alignment.topCenter,
-                            child: Align(
-                              alignment: Alignment.topCenter,
-                              // 1.0 — развернуто, 0.0 — свернуто, контент всегда в дереве
-                              heightFactor: widget.isExpanded ? 1.0 : 0.0,
-                              child: Column(
-                                children: [
-                                  if (importantTodayTasks.isNotEmpty) ...[
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: SegmentedButton(
-                                            label: 'Все дела',
-                                            selected: !widget.showOnlyImportant,
-                                            onTap: !widget.showOnlyImportant
-                                                ? null
-                                                : widget.onToggleShowImportant,
-                                          ),
+                            // 1.0 — развернуто, 0.0 — свернуто, контент всегда в дереве
+                            heightFactor: widget.isExpanded ? 1.0 : 0.0,
+                            child: Column(
+                              children: [
+                                if (importantTodayTasks.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: SegmentedButton(
+                                          label: 'Все дела',
+                                          selected: !widget.showOnlyImportant,
+                                          onTap: !widget.showOnlyImportant
+                                              ? null
+                                              : widget.onToggleShowImportant,
                                         ),
-                                        const SizedBox(width: 8),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: SegmentedButton(
+                                          label: 'Только важные',
+                                          selected: widget.showOnlyImportant,
+                                          onTap: widget.showOnlyImportant
+                                              ? null
+                                              : widget.onToggleShowImportant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                const SizedBox(height: 16),
+                                if (displayedTasks.isEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: const [
+                                        Icon(Icons.inbox, color: Colors.grey),
+                                        SizedBox(width: 12),
                                         Expanded(
-                                          child: SegmentedButton(
-                                            label: 'Только важные',
-                                            selected: widget.showOnlyImportant,
-                                            onTap: widget.showOnlyImportant
-                                                ? null
-                                                : widget.onToggleShowImportant,
+                                          child: Text(
+                                            'На сегодня задач нет',
+                                            style:
+                                            TextStyle(color: Colors.grey),
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ],
-                                  const SizedBox(height: 16),
-                                  if (displayedTasks.isEmpty)
-                                    Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade100,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        children: const [
-                                          Icon(Icons.inbox, color: Colors.grey),
-                                          SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              'На сегодня задач нет',
-                                              style: TextStyle(color: Colors.grey),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  else
-                                    TaskList(
-                                      tasks: displayedTasks,
-                                      onTaskClick: widget.onTaskClick,
-                                      onUpdateTask: widget.onUpdateTask,
-                                      onDeleteTask: widget.onDeleteTask,
-                                    ),
-                                ],
-                              ),
+                                  )
+                                else
+                                  TaskList(
+                                    tasks: displayedTasks,
+                                    onTaskClick: widget.onTaskClick,
+                                    onUpdateTask: widget.onUpdateTask,
+                                    onDeleteTask: widget.onDeleteTask,
+                                  ),
+                              ],
                             ),
                           ),
-                        )
+                        ),
                       ),
                     ],
                   ),
