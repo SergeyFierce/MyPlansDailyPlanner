@@ -181,27 +181,55 @@ class _CustomCalendarState extends State<CustomCalendar> {
                               month == _currentMonth.month && tempYear == _currentMonth.year;
                           final isTodayMonth =
                               month == widget.today.month && tempYear == widget.today.year;
-                          return ListTile(
-                            title: Text(monthLabels[index]),
-                            onTap: () =>
-                                Navigator.of(context).pop(DateTime(tempYear, month)),
-                            selected: isSelected,
-                            selectedTileColor: const Color(0xFFEEF2FF),
-                            trailing: isTodayMonth
-                                ? const Icon(
-                                    Icons.today,
-                                    color: Color(0xFF4F46E5),
-                                  )
-                                : null,
-                            shape: RoundedRectangleBorder(
+
+                          final textColor = isSelected
+                              ? const Color(0xFF1D4ED8)
+                              : Colors.black.withOpacity(0.85);
+
+                          return Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
                               borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(
-                                color:
-                                    isTodayMonth ? const Color(0xFF4F46E5) : Colors.transparent,
-                                width: 1.2,
+                              onTap: () =>
+                                  Navigator.of(context).pop(DateTime(tempYear, month)),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFFEEF2FF) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isTodayMonth
+                                        ? const Color(0xFF4F46E5)
+                                        : Colors.transparent,
+                                    width: 1.2,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        monthLabels[index],
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 16,
+                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isTodayMonth)
+                                      const Icon(
+                                        Icons.today,
+                                        color: Color(0xFF4F46E5),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
-                            selectedColor: const Color(0xFF1D4ED8),
                           );
                         },
                       ),
