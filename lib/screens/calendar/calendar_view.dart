@@ -89,6 +89,12 @@ class CalendarView extends StatelessWidget {
 
     final todayFormatted = _formatDate(today);
 
+    final theme = Theme.of(context);
+    final isLightTheme = theme.brightness == Brightness.light;
+    final cardColor = isLightTheme ? Colors.white : theme.cardColor;
+    final cardElevation = isLightTheme ? 6.0 : 2.0;
+    final cardShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(20));
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Center(
@@ -111,10 +117,15 @@ class CalendarView extends StatelessWidget {
                 ),
               ),
               Card(
+                color: cardColor,
+                elevation: cardElevation,
+                shadowColor: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
+                shape: cardShape,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: CustomCalendar(
                     selected: selectedDate,
+                    today: today,
                     onSelect: onDateClick,
                     importantDates:
                         scheduleTasks.where((t) => t.isImportant).map((t) => t.date).toList(),
@@ -123,13 +134,17 @@ class CalendarView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Card(
+                color: cardColor,
+                elevation: cardElevation,
+                shadowColor: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
+                shape: cardShape,
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${todayFormatted.day} ${todayFormatted.month}, ${todayFormatted.dayName}',
+                        'Сегодня · ${todayFormatted.day} ${todayFormatted.month}, ${todayFormatted.dayName}',
                         style: const TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                       const SizedBox(height: 12),
