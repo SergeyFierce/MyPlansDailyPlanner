@@ -122,7 +122,7 @@ class CalendarView extends StatelessWidget {
                 shadowColor: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.2),
                 shape: cardShape,
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                   child: CustomCalendar(
                     selected: selectedDate,
                     today: today,
@@ -196,12 +196,22 @@ class CalendarView extends StatelessWidget {
                           alignment: Alignment.topCenter,
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 350),
-                            switchInCurve: Curves.easeOutCubic,
-                            switchOutCurve: Curves.easeInCubic,
-                            transitionBuilder: (child, anim) {
+                            transitionBuilder: (child, animation) {
+                              final curvedAnimation = CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOutCubic,
+                                reverseCurve: Curves.easeInCubic,
+                              );
+
                               return FadeTransition(
-                                opacity: anim,
-                                child: child,
+                                opacity: curvedAnimation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, -0.03),
+                                    end: Offset.zero,
+                                  ).animate(curvedAnimation),
+                                  child: child,
+                                ),
                               );
                             },
                             layoutBuilder: (currentChild, previousChildren) {
