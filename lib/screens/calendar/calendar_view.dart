@@ -193,7 +193,7 @@ class CalendarView extends StatelessWidget {
                         child: AnimatedSize(
                           duration: const Duration(milliseconds: 700),
                           curve: Curves.easeInOutCubic,
-                          alignment: Alignment.topCenter,
+                          alignment: Alignment.center,
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 350),
                             transitionBuilder: (child, animation) {
@@ -205,11 +205,9 @@ class CalendarView extends StatelessWidget {
 
                               return FadeTransition(
                                 opacity: curvedAnimation,
-                                child: SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(0, -0.03),
-                                    end: Offset.zero,
-                                  ).animate(curvedAnimation),
+                                child: SizeTransition(
+                                  sizeFactor: curvedAnimation,
+                                  axisAlignment: 0.0,
                                   child: child,
                                 ),
                               );

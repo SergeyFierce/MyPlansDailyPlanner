@@ -472,13 +472,6 @@ class _CustomCalendarState extends State<CustomCalendar>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Выберите месяц или год',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
                       const SizedBox(height: 6),
                       Wrap(
                         alignment: WrapAlignment.center,
