@@ -329,7 +329,7 @@ class _TimelineMarker extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.grey.shade600,
-                fontWeight: isFullHour ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
