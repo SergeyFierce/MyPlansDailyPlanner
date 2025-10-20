@@ -75,11 +75,10 @@ class _TaskCardState extends State<TaskCard> {
     final timeLabel = formatTimeLabel(widget.task.startTime, widget.task.endTime);
     final subTasks = widget.task.subTasks;
     final hasSubTasks = subTasks.isNotEmpty;
-    final canCollapseSubTasks = widget.enableExpansion && subTasks.length > widget.collapsedSubtaskLimit;
-    final displayedSubTasks = widget.enableExpansion && !_isExpanded && canCollapseSubTasks
-        ? subTasks.take(widget.collapsedSubtaskLimit).toList()
-        : subTasks;
-    final hasHiddenSubTasks = widget.enableExpansion && !_isExpanded && subTasks.length > displayedSubTasks.length;
+    final completedSubTasks = subTasks.where((item) => item.isCompleted).length;
+    final totalSubTasks = subTasks.length;
+    final progressValue = totalSubTasks == 0 ? null : completedSubTasks / totalSubTasks;
+    final showSubTasks = widget.enableExpansion && _isExpanded && hasSubTasks;
     final showExpansionIndicator = widget.enableExpansion && hasSubTasks;
     final showNavigationIndicator = !widget.enableExpansion && widget.onPrimaryTap != null;
 
@@ -174,52 +173,118 @@ class _TaskCardState extends State<TaskCard> {
                                 : TextDecoration.none,
                           ),
                         ),
+                        if (widget.task.comment.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            widget.task.comment,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ],
               ),
-              if (displayedSubTasks.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                ...displayedSubTasks.map(
-                  (subTask) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
+              const SizedBox(height: 12),
+              if (totalSubTasks > 0)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Checkbox(
-                          value: subTask.isCompleted,
-                          onChanged: (_) => _toggleSubTask(subTask),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            subTask.title,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade800,
-                              decoration: subTask.isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : TextDecoration.none,
-                            ),
+                        const Icon(Icons.checklist_outlined, size: 18, color: Color(0xFF4F46E5)),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$completedSubTasks из $totalSubTasks подзадач',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ),
-                if (hasHiddenSubTasks)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 40, top: 2),
-                    child: Text(
-                      '+ ещё ${subTasks.length - displayedSubTasks.length} подзадачи',
+                    const SizedBox(height: 6),
+                    if (progressValue != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: progressValue,
+                          minHeight: 6,
+                          backgroundColor: Colors.grey.shade300,
+                          valueColor: const AlwaysStoppedAnimation(Color(0xFF4F46E5)),
+                        ),
+                      ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Icon(
+                      Icons.checklist_rtl,
+                      size: 18,
+                      color: Colors.grey.shade500,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Подзадач нет',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         color: Colors.grey.shade600,
                       ),
                     ),
+                  ],
+                ),
+              if (showSubTasks) ...[
+                const SizedBox(height: 12),
+                ...subTasks.map(
+                  (subTask) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Checkbox(
+                              value: subTask.isCompleted,
+                              onChanged: (_) => _toggleSubTask(subTask),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                subTask.title,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade800,
+                                  decoration: subTask.isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : TextDecoration.none,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (subTask.comment.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 40, top: 4),
+                            child: Text(
+                              subTask.comment,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
+                ),
               ],
             ],
           ),

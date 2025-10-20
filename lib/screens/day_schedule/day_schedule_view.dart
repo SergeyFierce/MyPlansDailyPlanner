@@ -3,9 +3,9 @@ import 'package:intl/intl.dart';
 
 import '../../models/task.dart';
 import '../../utils/time_utils.dart';
-import '../../widgets/dialogs/add_task_dialog.dart';
 import '../../widgets/dialogs/task_details_dialog.dart';
 import '../../widgets/task_card.dart';
+import 'add_task_screen.dart';
 
 class DayScheduleView extends StatefulWidget {
   const DayScheduleView({
@@ -72,14 +72,31 @@ class _DayScheduleViewState extends State<DayScheduleView> {
     }
   }
 
-  void _handleAddTask() {
-    showDialog(
-      context: context,
-      builder: (context) => AddTaskDialog(
-        selectedDate: widget.selectedDate,
-        onAddTask: widget.onAddTask,
+  Future<void> _handleAddTask() async {
+    final task = await Navigator.of(context).push<ScheduleTask>(
+      PageRouteBuilder<ScheduleTask>(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            AddTaskScreen(selectedDate: widget.selectedDate),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(parent: animation, curve: Curves.easeOut);
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.08),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
+
+    if (task != null) {
+      widget.onAddTask(task);
+    }
   }
 
   void _showTaskDetails(ScheduleTask task) {
