@@ -3,9 +3,9 @@ import 'package:intl/intl.dart';
 
 import '../../models/task.dart';
 import '../../utils/time_utils.dart';
-import '../../widgets/dialogs/task_details_dialog.dart';
 import '../../widgets/task_card.dart';
 import 'add_task_screen.dart';
+import 'task_details_screen.dart';
 
 class DayScheduleView extends StatefulWidget {
   const DayScheduleView({
@@ -100,12 +100,13 @@ class _DayScheduleViewState extends State<DayScheduleView> {
   }
 
   void _showTaskDetails(ScheduleTask task) {
-    showDialog(
-      context: context,
-      builder: (context) => TaskDetailsDialog(
-        task: task,
-        onUpdateTask: widget.onUpdateTask,
-        onDeleteTask: widget.onDeleteTask,
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => TaskDetailsScreen(
+          task: task,
+          onUpdateTask: widget.onUpdateTask,
+          onDeleteTask: widget.onDeleteTask,
+        ),
       ),
     );
   }
@@ -166,14 +167,18 @@ class _DayScheduleViewState extends State<DayScheduleView> {
         }
         return minutesFromTime(a.endTime).compareTo(minutesFromTime(b.endTime));
       });
-    final Map<int, List<ScheduleTask>> tasksBySlot = {};
+    final Map<int, List<ScheduleTask>> tasksByMinute = {};
     for (final task in sortedTasks) {
       final minutes = minutesFromTime(task.startTime);
-      final slot = minutes ~/ 30;
-      tasksBySlot.putIfAbsent(slot, () => []).add(task);
+      tasksByMinute.putIfAbsent(minutes, () => []).add(task);
     }
 
-    final slots = List<int>.generate(49, (index) => index);
+    final baseMarkers = List<int>.generate(25, (index) => index * 60);
+    final markers = {
+      ...baseMarkers,
+      ...tasksByMinute.keys,
+    }.toList()
+      ..sort();
 
     return Card(
       child: Padding(
@@ -207,23 +212,22 @@ class _DayScheduleViewState extends State<DayScheduleView> {
                   ],
                 ),
               ),
-            for (final slot in slots) ...[
-              _TimelineMarker(minutes: slot * 30),
-              if (slot < 48)
-                ...List.generate(tasksBySlot[slot]?.length ?? 0, (index) {
-                  final task = tasksBySlot[slot]![index];
-                  final key = _taskKeys.putIfAbsent(task.id, () => GlobalKey());
-                  return Padding(
-                    key: key,
-                    padding:
-                        const EdgeInsets.only(left: 84, right: 16, top: 8, bottom: 12),
-                    child: TaskCard(
-                      task: task,
-                      onUpdateTask: widget.onUpdateTask,
-                      onOpenDetails: () => _showTaskDetails(task),
-                    ),
-                  );
-                }),
+            for (final minutes in markers) ...[
+              _TimelineMarker(minutes: minutes),
+              ...List.generate(tasksByMinute[minutes]?.length ?? 0, (index) {
+                final task = tasksByMinute[minutes]![index];
+                final key = _taskKeys.putIfAbsent(task.id, () => GlobalKey());
+                return Padding(
+                  key: key,
+                  padding:
+                      const EdgeInsets.only(left: 84, right: 16, top: 8, bottom: 12),
+                  child: TaskCard(
+                    task: task,
+                    onUpdateTask: widget.onUpdateTask,
+                    onOpenDetails: () => _showTaskDetails(task),
+                  ),
+                );
+              }),
             ],
           ],
         ),

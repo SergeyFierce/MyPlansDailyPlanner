@@ -219,24 +219,6 @@ class _TaskCardState extends State<TaskCard> {
                         ),
                       ),
                   ],
-                )
-              else
-                Row(
-                  children: [
-                    Icon(
-                      Icons.checklist_rtl,
-                      size: 18,
-                      color: Colors.grey.shade500,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Подзадач нет',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
                 ),
               if (showSubTasks) ...[
                 const SizedBox(height: 12),

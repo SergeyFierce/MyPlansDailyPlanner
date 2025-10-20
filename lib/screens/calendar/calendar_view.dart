@@ -5,9 +5,9 @@ import '../../models/formatted_date.dart';
 import '../../models/task.dart';
 import '../../widgets/badge.dart';
 import '../../widgets/custom_calendar.dart';
-import '../../widgets/dialogs/task_details_dialog.dart';
 import '../../widgets/segmented_button.dart';
 import '../../widgets/task_list.dart';
+import '../day_schedule/task_details_screen.dart';
 
 class CalendarView extends StatefulWidget {
   const CalendarView({
@@ -124,12 +124,13 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
   }
 
   void _openTaskDetails(ScheduleTask task) {
-    showDialog(
-      context: context,
-      builder: (context) => TaskDetailsDialog(
-        task: task,
-        onUpdateTask: widget.onUpdateTask,
-        onDeleteTask: widget.onDeleteTask,
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => TaskDetailsScreen(
+          task: task,
+          onUpdateTask: widget.onUpdateTask,
+          onDeleteTask: widget.onDeleteTask,
+        ),
       ),
     );
   }
