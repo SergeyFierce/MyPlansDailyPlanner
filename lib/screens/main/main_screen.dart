@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/task.dart';
 import '../calendar/calendar_view.dart';
-import '../day_schedule/day_schedule_view.dart';
-
-enum ActiveView { calendar, schedule }
+import '../day_schedule/day_schedule_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,12 +12,10 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  ActiveView _activeView = ActiveView.calendar;
   final DateTime _today = DateTime(2025, 10, 16);
   late DateTime _selectedDate;
   bool _showOnlyImportant = false;
   bool _isExpanded = false;
-  int? _scrollToTaskId;
 
   final List<ScheduleTask> _scheduleTasks = [
     ScheduleTask(
@@ -161,7 +157,6 @@ class _MainScreenState extends State<MainScreen> {
           comment: task.comment,
         ),
       );
-      _scrollToTaskId = newId;
     });
   }
 
@@ -183,102 +178,58 @@ class _MainScreenState extends State<MainScreen> {
   void _handleDateClick(DateTime date) {
     setState(() {
       _selectedDate = date;
-      _activeView = ActiveView.schedule;
-      _scrollToTaskId = null;
     });
+    _openDaySchedule(date: date);
   }
 
   void _handleTaskClick(int taskId) {
-    setState(() {
-      _activeView = ActiveView.schedule;
-      _scrollToTaskId = taskId;
-    });
+    _openDaySchedule(date: _selectedDate, scrollToTaskId: taskId);
   }
 
-  void _handleBackToCalendar() {
-    setState(() {
-      _activeView = ActiveView.calendar;
-      _scrollToTaskId = null;
-    });
+  void _openDaySchedule({required DateTime date, int? scrollToTaskId}) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => DayScheduleScreen(
+          selectedDate: date,
+          initialTasks: _getTasksForDate(date),
+          initialScrollToTaskId: scrollToTaskId,
+          loadTasks: () => _getTasksForDate(date),
+          onAddTask: (task) =>
+              _handleAddTask(task.copyWith(date: date)),
+          onUpdateTask: _handleUpdateTask,
+          onDeleteTask: _handleDeleteTask,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_activeView == ActiveView.schedule) {
-          _handleBackToCalendar();
-          return false;
-        }
-        return true;
-      },
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFEFF6FF), Color(0xFFEEF2FF)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFEFF6FF), Color(0xFFEEF2FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: SafeArea(
-          bottom: false,
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-
-              // ВАЖНО: растягиваем текущего и предыдущих детей на весь доступный размер
-              layoutBuilder: (currentChild, previousChildren) {
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ...previousChildren,
-                    if (currentChild != null) currentChild,
-                  ],
-                );
-              },
-
-              transitionBuilder: (child, anim) {
-                final isCalendar = (child.key as ValueKey?)?.value == 'calendar';
-                final offset = isCalendar ? const Offset(-0.05, 0) : const Offset(0.05, 0);
-                return FadeTransition(
-                  opacity: anim,
-                  child: SlideTransition(
-                    position: Tween<Offset>(begin: offset, end: Offset.zero).animate(anim),
-                    child: child,
-                  ),
-                );
-              },
-
-              child: _activeView == ActiveView.calendar
-                  ? CalendarView(
-                key: const ValueKey('calendar'),
-                selectedDate: _selectedDate,
-                today: _today,
-                scheduleTasks: _scheduleTasks,
-                showOnlyImportant: _showOnlyImportant,
-                isExpanded: _isExpanded,
-                onDateClick: _handleDateClick,
-                onTaskClick: _handleTaskClick,
-                onUpdateTask: _handleUpdateTask,
-                onDeleteTask: _handleDeleteTask,
-                onToggleExpanded: () => setState(() => _isExpanded = !_isExpanded),
-                onToggleShowImportant: () =>
-                    setState(() => _showOnlyImportant = !_showOnlyImportant),
-              )
-                  : DayScheduleView(
-                key: const ValueKey('schedule'),
-                selectedDate: _selectedDate,
-                tasks: _getTasksForDate(_selectedDate),
-                scrollToTaskId: _scrollToTaskId,
-                onAddTask: (task) => _handleAddTask(task.copyWith(date: _selectedDate)),
-                onUpdateTask: _handleUpdateTask,
-                onDeleteTask: _handleDeleteTask,
-                onBack: _handleBackToCalendar,
-              ),
-            ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: CalendarView(
+            selectedDate: _selectedDate,
+            today: _today,
+            scheduleTasks: _scheduleTasks,
+            showOnlyImportant: _showOnlyImportant,
+            isExpanded: _isExpanded,
+            onDateClick: _handleDateClick,
+            onTaskClick: _handleTaskClick,
+            onUpdateTask: _handleUpdateTask,
+            onDeleteTask: _handleDeleteTask,
+            onToggleExpanded: () => setState(() => _isExpanded = !_isExpanded),
+            onToggleShowImportant:
+                () => setState(() => _showOnlyImportant = !_showOnlyImportant),
           ),
         ),
       ),
