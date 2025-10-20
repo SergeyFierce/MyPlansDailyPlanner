@@ -23,6 +23,7 @@ class TaskDetailsDialog extends StatefulWidget {
 class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
+  late TextEditingController _commentController;
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
   late bool _isImportant;
@@ -36,6 +37,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task.title);
+    _commentController = TextEditingController(text: widget.task.comment);
     _startTime = parseTimeOfDay(widget.task.startTime) ??
         const TimeOfDay(hour: 9, minute: 0);
     _endTime = parseTimeOfDay(widget.task.endTime) ??
@@ -48,6 +50,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           (subTask) => _EditableSubTask(
             id: subTask.id,
             controller: TextEditingController(text: subTask.title),
+            commentController: TextEditingController(text: subTask.comment),
             isCompleted: subTask.isCompleted,
           ),
         )
@@ -60,8 +63,10 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   @override
   void dispose() {
     _titleController.dispose();
+    _commentController.dispose();
     for (final entry in _subTasks) {
       entry.controller.dispose();
+      entry.commentController.dispose();
     }
     super.dispose();
   }
@@ -72,6 +77,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         _EditableSubTask(
           id: _nextSubTaskId++,
           controller: TextEditingController(),
+          commentController: TextEditingController(),
           isCompleted: false,
         ),
       );
@@ -83,6 +89,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     setState(() {
       final removed = _subTasks.removeAt(index);
       removed.controller.dispose();
+      removed.commentController.dispose();
     });
   }
 
@@ -109,12 +116,14 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           id: entry.id,
           title: title,
           isCompleted: entry.isCompleted,
+          comment: entry.commentController.text.trim(),
         ),
       );
     }
 
     final updatedTask = widget.task.copyWith(
       title: _titleController.text.trim(),
+      comment: _commentController.text.trim(),
       startTime: formatTimeOfDay(_startTime),
       endTime: formatTimeOfDay(effectiveEnd),
       isImportant: _isImportant,
@@ -150,6 +159,15 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _commentController,
+                decoration: const InputDecoration(
+                  labelText: 'Комментарий',
+                  hintText: 'Добавьте детали или контекст',
+                ),
+                maxLines: 3,
               ),
               const SizedBox(height: 16),
               SwitchListTile(
@@ -232,31 +250,53 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 final entry = _subTasks[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Checkbox(
-                        value: entry.isCompleted,
-                        onChanged: (value) => setState(() {
-                          entry.isCompleted = value ?? false;
-                        }),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: entry.controller,
-                          decoration: InputDecoration(
-                            labelText: 'Подзадача ${index + 1}',
-                          ),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Checkbox(
+                              value: entry.isCompleted,
+                              onChanged: (value) => setState(() {
+                                entry.isCompleted = value ?? false;
+                              }),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: TextField(
+                                controller: entry.controller,
+                                decoration: InputDecoration(
+                                  labelText: 'Подзадача ${index + 1}',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () => _removeSubTask(index),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 18),
-                        onPressed: () => _removeSubTask(index),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: entry.commentController,
+                          decoration: const InputDecoration(
+                            labelText: 'Комментарий',
+                            hintText: 'Комментарий к подзадаче',
+                          ),
+                          maxLines: 2,
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }),
@@ -295,10 +335,12 @@ class _EditableSubTask {
   _EditableSubTask({
     required this.id,
     required this.controller,
+    required this.commentController,
     required this.isCompleted,
   });
 
   final int id;
   final TextEditingController controller;
+  final TextEditingController commentController;
   bool isCompleted;
 }

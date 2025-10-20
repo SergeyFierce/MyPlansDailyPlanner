@@ -29,8 +29,13 @@ class _MainScreenState extends State<MainScreen> {
       endTime: '09:00',
       isImportant: true,
       date: DateTime(2025, 10, 16),
+      comment: 'Порадовать её новостями из жизни.',
       subTasks: const [
-        SubTask(id: 101, title: 'Составить список вопросов'),
+        SubTask(
+          id: 101,
+          title: 'Составить список вопросов',
+          comment: 'Вспомнить про отпуск и здоровье.',
+        ),
       ],
     ),
     ScheduleTask(
@@ -40,9 +45,18 @@ class _MainScreenState extends State<MainScreen> {
       endTime: '10:30',
       isImportant: true,
       date: DateTime(2025, 10, 16),
+      comment: 'Обсуждаем прогресс по релизу.',
       subTasks: const [
-        SubTask(id: 102, title: 'Подготовить повестку'),
-        SubTask(id: 103, title: 'Разослать материалы'),
+        SubTask(
+          id: 102,
+          title: 'Подготовить повестку',
+          comment: 'Собрать вопросы от команды.',
+        ),
+        SubTask(
+          id: 103,
+          title: 'Разослать материалы',
+          comment: 'Слайды и ссылки на прототип.',
+        ),
       ],
     ),
     ScheduleTask(
@@ -53,9 +67,18 @@ class _MainScreenState extends State<MainScreen> {
       isImportant: false,
       isCompleted: false,
       date: DateTime(2025, 10, 16),
+      comment: 'Собрать цифры за квартал.',
       subTasks: const [
-        SubTask(id: 104, title: 'Собрать данные из CRM'),
-        SubTask(id: 105, title: 'Обновить диаграммы'),
+        SubTask(
+          id: 104,
+          title: 'Собрать данные из CRM',
+          comment: 'Выгрузить экспорт в Excel.',
+        ),
+        SubTask(
+          id: 105,
+          title: 'Обновить диаграммы',
+          comment: 'Добавить новые метрики.',
+        ),
       ],
     ),
     ScheduleTask(
@@ -65,9 +88,19 @@ class _MainScreenState extends State<MainScreen> {
       endTime: '19:30',
       isCompleted: true,
       date: DateTime(2025, 10, 16),
+      comment: 'Поддерживаем форму.',
       subTasks: const [
-        SubTask(id: 106, title: 'Разминка', isCompleted: true),
-        SubTask(id: 107, title: 'Кардио'),
+        SubTask(
+          id: 106,
+          title: 'Разминка',
+          isCompleted: true,
+          comment: 'Лёгкая растяжка.',
+        ),
+        SubTask(
+          id: 107,
+          title: 'Кардио',
+          comment: 'Интервальный бег 20 минут.',
+        ),
       ],
     ),
     ScheduleTask(
@@ -77,9 +110,18 @@ class _MainScreenState extends State<MainScreen> {
       endTime: '11:30',
       isImportant: true,
       date: DateTime(2025, 10, 18),
+      comment: 'Готовим демо для партнёров.',
       subTasks: const [
-        SubTask(id: 108, title: 'Собрать слайды'),
-        SubTask(id: 109, title: 'Репетиция выступления'),
+        SubTask(
+          id: 108,
+          title: 'Собрать слайды',
+          comment: 'Обновить блок с метриками.',
+        ),
+        SubTask(
+          id: 109,
+          title: 'Репетиция выступления',
+          comment: 'С таймером и обратной связью.',
+        ),
       ],
     ),
   ];
@@ -116,6 +158,7 @@ class _MainScreenState extends State<MainScreen> {
           isImportant: task.isImportant,
           isCompleted: task.isCompleted,
           subTasks: task.subTasks,
+          comment: task.comment,
         ),
       );
       _scrollToTaskId = newId;

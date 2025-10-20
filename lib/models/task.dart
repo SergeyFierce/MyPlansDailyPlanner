@@ -2,21 +2,25 @@ class SubTask {
   final int id;
   final String title;
   final bool isCompleted;
+  final String comment;
 
   const SubTask({
     required this.id,
     required this.title,
     this.isCompleted = false,
+    this.comment = '',
   });
 
   SubTask copyWith({
     String? title,
     bool? isCompleted,
+    String? comment,
   }) {
     return SubTask(
       id: id,
       title: title ?? this.title,
       isCompleted: isCompleted ?? this.isCompleted,
+      comment: comment ?? this.comment,
     );
   }
 }
@@ -28,6 +32,7 @@ class Task {
   final bool isImportant;
   final bool isCompleted;
   final List<SubTask> subTasks;
+  final String comment;
 
   const Task({
     required this.id,
@@ -36,6 +41,7 @@ class Task {
     this.isImportant = false,
     this.isCompleted = false,
     this.subTasks = const [],
+    this.comment = '',
   });
 
   Task copyWith({
@@ -44,6 +50,7 @@ class Task {
     bool? isImportant,
     bool? isCompleted,
     List<SubTask>? subTasks,
+    String? comment,
   }) {
     return Task(
       id: id,
@@ -52,6 +59,7 @@ class Task {
       isImportant: isImportant ?? this.isImportant,
       isCompleted: isCompleted ?? this.isCompleted,
       subTasks: subTasks ?? this.subTasks,
+      comment: comment ?? this.comment,
     );
   }
 }
@@ -69,6 +77,7 @@ class ScheduleTask extends Task {
     bool isImportant = false,
     bool isCompleted = false,
     List<SubTask> subTasks = const [],
+    String comment = '',
   }) : super(
           id: id,
           title: title,
@@ -76,6 +85,7 @@ class ScheduleTask extends Task {
           isImportant: isImportant,
           isCompleted: isCompleted,
           subTasks: subTasks,
+          comment: comment,
         );
 
   bool get hasDuration => startTime != endTime;
@@ -89,6 +99,7 @@ class ScheduleTask extends Task {
     bool? isImportant,
     bool? isCompleted,
     List<SubTask>? subTasks,
+    String? comment,
   }) {
     final updatedSubTasks = subTasks ?? this.subTasks;
     return ScheduleTask(
@@ -100,6 +111,7 @@ class ScheduleTask extends Task {
       isImportant: isImportant ?? this.isImportant,
       isCompleted: isCompleted ?? this.isCompleted,
       subTasks: updatedSubTasks,
+      comment: comment ?? this.comment,
     );
   }
 }
