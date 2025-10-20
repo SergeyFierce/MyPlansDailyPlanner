@@ -28,6 +28,13 @@ class TaskCard extends StatefulWidget {
 class _TaskCardState extends State<TaskCard> {
   bool _isExpanded = false;
 
+  void _toggleExpanded() {
+    if (!widget.enableExpansion) return;
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
+
   @override
   void didUpdateWidget(TaskCard oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -38,9 +45,7 @@ class _TaskCardState extends State<TaskCard> {
 
   void _handleTap() {
     if (widget.enableExpansion) {
-      setState(() {
-        _isExpanded = !_isExpanded;
-      });
+      widget.onOpenDetails();
     } else {
       widget.onPrimaryTap?.call();
     }
@@ -82,13 +87,25 @@ class _TaskCardState extends State<TaskCard> {
     final showExpansionIndicator = widget.enableExpansion && hasSubTasks;
     final showNavigationIndicator = !widget.enableExpansion && widget.onPrimaryTap != null;
 
+    final defaultColor = const Color(0xFFF5F6FF);
+    final hasCustomBackground = backgroundColor != null;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: backgroundColor,
+      color: backgroundColor ?? defaultColor,
+      elevation: hasCustomBackground ? 0 : 1,
+      shadowColor: hasCustomBackground ? Colors.transparent : Colors.black12,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: hasCustomBackground
+            ? BorderSide.none
+            : BorderSide(color: Colors.indigo.shade50),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: _handleTap,
-        onLongPress: widget.onOpenDetails,
+        onLongPress:
+            widget.enableExpansion ? _toggleExpanded : widget.onOpenDetails,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Column(
@@ -150,13 +167,22 @@ class _TaskCardState extends State<TaskCard> {
                               ),
                             ],
                             const Spacer(),
-                            if (showExpansionIndicator || showNavigationIndicator)
+                            if (showExpansionIndicator)
+                              IconButton(
+                                iconSize: 20,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: _toggleExpanded,
+                                icon: Icon(
+                                  _isExpanded
+                                      ? Icons.expand_less
+                                      : Icons.expand_more,
+                                  color: Colors.grey.shade500,
+                                ),
+                              )
+                            else if (showNavigationIndicator)
                               Icon(
-                                showExpansionIndicator
-                                    ? (_isExpanded
-                                        ? Icons.expand_less
-                                        : Icons.expand_more)
-                                    : Icons.chevron_right,
+                                Icons.chevron_right,
                                 size: 18,
                                 color: Colors.grey.shade500,
                               ),

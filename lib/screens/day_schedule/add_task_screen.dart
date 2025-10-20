@@ -22,6 +22,27 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   bool _isImportant = false;
   bool _isTimeRange = false;
 
+  InputDecoration _fieldDecoration({
+    String? label,
+    String? hint,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.grey.shade100,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF4F46E5)),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -34,11 +55,21 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       _startTime = time;
       if (!_isTimeRange) {
         _endTime = time;
+      } else if (!isEndAfterStart(_startTime, _endTime)) {
+        _endTime = addMinutes(time, 5);
       }
     });
   }
 
   void _pickEndTime(TimeOfDay time) {
+    if (!isEndAfterStart(_startTime, time)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Время окончания должно быть позже времени начала.'),
+        ),
+      );
+      return;
+    }
     setState(() => _endTime = time);
   }
 
@@ -107,7 +138,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _titleController,
-                      decoration: const InputDecoration(labelText: 'Название дела'),
+                      decoration: _fieldDecoration(label: 'Название дела'),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Введите название';
@@ -132,8 +163,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _commentController,
-                      decoration: const InputDecoration(
-                        hintText: 'Добавьте детали или контекст',
+                      decoration: _fieldDecoration(
+                        hint: 'Добавьте детали или контекст',
                       ),
                       maxLines: 3,
                     ),
@@ -152,7 +183,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                           if (!value) {
                             _endTime = _startTime;
                           } else if (!isEndAfterStart(_startTime, _endTime)) {
-                            _endTime = addMinutes(_startTime, 60);
+                            _endTime = addMinutes(_startTime, 5);
                           }
                         });
                       },
