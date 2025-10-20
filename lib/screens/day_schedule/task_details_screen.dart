@@ -33,6 +33,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   String? _titleError;
   bool _hasChanges = false;
   bool _showAddSubTaskControls = false;
+  bool _isSubTaskSectionVisible = false;
 
   @override
   void initState() {
@@ -97,6 +98,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         ? 0
         : _subTasks.map((entry) => entry.id).reduce((a, b) => a > b ? a : b) + 1;
     _showAddSubTaskControls = _subTasks.isNotEmpty;
+    _isSubTaskSectionVisible = _subTasks.isNotEmpty;
     _titleError = null;
     _hasChanges = false;
   }
@@ -266,6 +268,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   void _addSubTask() {
     setState(() {
       _showAddSubTaskControls = true;
+      _isSubTaskSectionVisible = true;
       _subTasks.add(
         _EditableSubTask(
           id: _nextSubTaskId++,
@@ -411,6 +414,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return WillPopScope(
       onWillPop: _handleBackNavigation,
       child: Scaffold(
@@ -516,122 +520,153 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   ],
                 ),
               ),
-              _buildSectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Подзадачи',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const Spacer(),
-                        if (!_showAddSubTaskControls && _subTasks.isEmpty)
-                          OutlinedButton.icon(
-                            onPressed: _addSubTask,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Добавить подзадачу'),
-                          ),
-                      ],
+              if (!_isSubTaskSectionVisible)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _isSubTaskSectionVisible = true;
+                      });
+                    },
+                    icon: const Icon(Icons.list_alt),
+                    label: Text(
+                      _subTasks.isEmpty
+                          ? 'Показать подзадачи'
+                          : 'Показать подзадачи (${_subTasks.length})',
                     ),
-                    const SizedBox(height: 12),
-                    if (_subTasks.isEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'Подзадачи ещё не добавлены',
-                          style: TextStyle(color: Colors.grey),
-                        ),
+                  ),
+                ),
+              if (_isSubTaskSectionVisible)
+                _buildSectionCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Подзадачи',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const Spacer(),
+                          if (!_showAddSubTaskControls && _subTasks.isEmpty) ...[
+                            OutlinedButton.icon(
+                              onPressed: _addSubTask,
+                              icon: const Icon(Icons.add),
+                              label: const Text('Добавить подзадачу'),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          IconButton(
+                            tooltip: 'Скрыть раздел',
+                            onPressed: () {
+                              setState(() {
+                                _isSubTaskSectionVisible = false;
+                              });
+                            },
+                            icon: const Icon(Icons.expand_less),
+                          ),
+                        ],
                       ),
-                    ...List.generate(_subTasks.length, (index) {
-                      final entry = _subTasks[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Container(
+                      const SizedBox(height: 12),
+                      if (_subTasks.isEmpty)
+                        Container(
+                          width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                            color: colorScheme.secondaryContainer,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Checkbox(
-                                    value: entry.isCompleted,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        entry.isCompleted = value ?? false;
-                                        _applyTaskUpdate(
-                                          _editedTask.copyWith(
-                                            subTasks: _collectSubTasks(),
-                                          ),
-                                        );
-                                      });
-                                    },
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: entry.controller,
-                                      onChanged: (_) => _commitSubTasks(),
-                                      decoration: _fieldDecoration(
-                                        label: 'Подзадача ${index + 1}',
+                          child: Text(
+                            'Подзадачи ещё не добавлены',
+                            style: TextStyle(
+                              color: colorScheme.onSecondaryContainer,
+                            ),
+                          ),
+                        ),
+                      ...List.generate(_subTasks.length, (index) {
+                        final entry = _subTasks[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: colorScheme.secondaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Checkbox(
+                                      value: entry.isCompleted,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          entry.isCompleted = value ?? false;
+                                          _applyTaskUpdate(
+                                            _editedTask.copyWith(
+                                              subTasks: _collectSubTasks(),
+                                            ),
+                                          );
+                                        });
+                                      },
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: entry.controller,
+                                        onChanged: (_) => _commitSubTasks(),
+                                        decoration: _fieldDecoration(
+                                          label: 'Подзадача ${index + 1}',
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  IconButton(
-                                    onPressed: () => _removeSubTask(index),
-                                    icon: const Icon(Icons.close, size: 18),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: entry.commentController,
-                                onChanged: (_) => _commitSubTasks(),
-                                maxLines: 2,
-                                decoration: _fieldDecoration(
-                                  label: 'Комментарий',
-                                  hint: 'Комментарий к подзадаче',
+                                    const SizedBox(width: 4),
+                                    IconButton(
+                                      onPressed: () => _removeSubTask(index),
+                                      icon: const Icon(Icons.close, size: 18),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: entry.commentController,
+                                  onChanged: (_) => _commitSubTasks(),
+                                  maxLines: 2,
+                                  decoration: _fieldDecoration(
+                                    label: 'Комментарий',
+                                    hint: 'Комментарий к подзадаче',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                      if (_showAddSubTaskControls || _subTasks.isNotEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: FilledButton.icon(
+                            onPressed: _addSubTask,
+                            icon: const Icon(Icons.add),
+                            label: Text(
+                              _subTasks.isEmpty
+                                  ? 'Добавить подзадачу'
+                                  : 'Добавить ещё подзадачу',
+                            ),
                           ),
                         ),
-                      );
-                    }),
-                    if (_showAddSubTaskControls || _subTasks.isNotEmpty)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: FilledButton.icon(
-                          onPressed: _addSubTask,
-                          icon: const Icon(Icons.add),
-                          label: Text(
-                            _subTasks.isEmpty
-                                ? 'Добавить подзадачу'
-                                : 'Добавить ещё подзадачу',
-                          ),
-                        ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ),
