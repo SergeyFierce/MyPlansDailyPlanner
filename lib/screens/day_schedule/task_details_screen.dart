@@ -415,6 +415,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final subTaskCardColor =
+        Color.lerp(colorScheme.secondaryContainer, colorScheme.surface, 0.25)!;
     return WillPopScope(
       onWillPop: _handleBackNavigation,
       child: Scaffold(
@@ -507,14 +509,49 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     SwitchListTile(
                       value: _editedTask.isCompleted,
                       onChanged: _toggleCompleted,
-                      title: const Text('Отметить как выполненное'),
+                      title: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text('Отметить как выполненное'),
+                          SizedBox(width: 8),
+                          Icon(
+                            Icons.check_circle,
+                            color: Color(0xFF16A34A),
+                            size: 20,
+                          ),
+                        ],
+                      ),
                       contentPadding: EdgeInsets.zero,
                     ),
                     const SizedBox(height: 8),
                     SwitchListTile(
                       value: _editedTask.isImportant,
                       onChanged: _toggleImportant,
-                      title: const Text('Отметить как важное'),
+                      title: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Отметить как важное'),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFC9D9),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'Важно',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFB42318),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ],
@@ -577,7 +614,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: colorScheme.secondaryContainer,
+                            color: subTaskCardColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -594,7 +631,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: colorScheme.secondaryContainer,
+                              color: subTaskCardColor,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(

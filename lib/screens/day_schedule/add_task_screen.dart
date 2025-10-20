@@ -225,7 +225,31 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     SwitchListTile(
                       value: _isImportant,
                       onChanged: (value) => setState(() => _isImportant = value),
-                      title: const Text('Отметить как важное'),
+                      title: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Отметить как важное'),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFC9D9),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'Важно',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFB42318),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                       contentPadding: EdgeInsets.zero,
                     ),
                     const SizedBox(height: 8),
