@@ -117,6 +117,17 @@ class _TimePickerFieldState extends State<TimePickerField> {
       decoration: InputDecoration(
         labelText: widget.label,
         suffixIcon: const Icon(Icons.access_time),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF4F46E5)),
+        ),
       ),
     );
   }
