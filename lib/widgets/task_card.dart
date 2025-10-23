@@ -77,7 +77,9 @@ class _TaskCardState extends State<TaskCard> {
         : widget.task.isImportant
             ? const Color(0xFFFDE2E4)
             : null;
-    final timeLabel = formatTimeLabel(widget.task.startTime, widget.task.endTime);
+    final startLocal = widget.task.startUtc.toLocal();
+    final endLocal = widget.task.endUtc.toLocal();
+    final timeLabel = formatTimeRange(startLocal, endLocal);
     final subTasks = widget.task.subTasks;
     final hasSubTasks = subTasks.isNotEmpty;
     final completedSubTasks = subTasks.where((item) => item.isCompleted).length;

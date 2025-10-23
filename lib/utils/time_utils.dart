@@ -1,25 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 String formatTimeOfDay(TimeOfDay time) {
   final hour = time.hour.toString().padLeft(2, '0');
   final minute = time.minute.toString().padLeft(2, '0');
   return '$hour:$minute';
-}
-
-TimeOfDay? parseTimeOfDay(String value) {
-  final parts = value.split(':');
-  if (parts.length != 2) return null;
-  final hour = int.tryParse(parts[0]);
-  final minute = int.tryParse(parts[1]);
-  if (hour == null || minute == null) return null;
-  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
-  return TimeOfDay(hour: hour, minute: minute);
-}
-
-int minutesFromTime(String value) {
-  final time = parseTimeOfDay(value);
-  if (time == null) return 0;
-  return time.hour * 60 + time.minute;
 }
 
 TimeOfDay addMinutes(TimeOfDay time, int minutes) {
@@ -36,9 +21,31 @@ bool isEndAfterStart(TimeOfDay start, TimeOfDay end) {
   return false;
 }
 
-String formatTimeLabel(String start, String end) {
-  if (start == end) {
-    return start;
+TimeOfDay timeOfDayFromDateTime(DateTime dateTime) {
+  return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
+}
+
+DateTime combineDateAndTime({
+  required DateTime date,
+  required TimeOfDay time,
+  bool toUtc = false,
+}) {
+  final combined = DateTime(
+    date.year,
+    date.month,
+    date.day,
+    time.hour,
+    time.minute,
+  );
+  return toUtc ? combined.toUtc() : combined;
+}
+
+String formatTimeRange(DateTime startLocal, DateTime endLocal) {
+  final formatter = DateFormat('HH:mm');
+  final startLabel = formatter.format(startLocal);
+  final endLabel = formatter.format(endLocal);
+  if (startLabel == endLabel) {
+    return startLabel;
   }
-  return '$start – $end';
+  return '$startLabel – $endLabel';
 }

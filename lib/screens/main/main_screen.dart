@@ -21,10 +21,12 @@ class _MainScreenState extends State<MainScreen> {
     ScheduleTask(
       id: 1,
       title: 'Позвонить маме',
-      startTime: '09:00',
-      endTime: '09:00',
+      startUtc: DateTime.utc(2025, 10, 16, 9, 0),
+      endUtc: DateTime.utc(2025, 10, 16, 9, 0),
       isImportant: true,
       date: DateTime(2025, 10, 16),
+      category: TaskCategory.personal,
+      hasReminder: true,
       comment: 'Порадовать её новостями из жизни.',
       subTasks: const [
         SubTask(
@@ -37,10 +39,12 @@ class _MainScreenState extends State<MainScreen> {
     ScheduleTask(
       id: 2,
       title: 'Командный созвон',
-      startTime: '09:30',
-      endTime: '10:30',
+      startUtc: DateTime.utc(2025, 10, 16, 9, 30),
+      endUtc: DateTime.utc(2025, 10, 16, 10, 30),
       isImportant: true,
       date: DateTime(2025, 10, 16),
+      category: TaskCategory.work,
+      hasReminder: true,
       comment: 'Обсуждаем прогресс по релизу.',
       subTasks: const [
         SubTask(
@@ -58,11 +62,12 @@ class _MainScreenState extends State<MainScreen> {
     ScheduleTask(
       id: 3,
       title: 'Работа над отчётом',
-      startTime: '12:00',
-      endTime: '14:00',
+      startUtc: DateTime.utc(2025, 10, 16, 12, 0),
+      endUtc: DateTime.utc(2025, 10, 16, 14, 0),
       isImportant: false,
       isCompleted: false,
       date: DateTime(2025, 10, 16),
+      category: TaskCategory.work,
       comment: 'Собрать цифры за квартал.',
       subTasks: const [
         SubTask(
@@ -80,10 +85,11 @@ class _MainScreenState extends State<MainScreen> {
     ScheduleTask(
       id: 4,
       title: 'Тренировка',
-      startTime: '18:00',
-      endTime: '19:30',
+      startUtc: DateTime.utc(2025, 10, 16, 18, 0),
+      endUtc: DateTime.utc(2025, 10, 16, 19, 30),
       isCompleted: true,
       date: DateTime(2025, 10, 16),
+      category: TaskCategory.health,
       comment: 'Поддерживаем форму.',
       subTasks: const [
         SubTask(
@@ -102,10 +108,11 @@ class _MainScreenState extends State<MainScreen> {
     ScheduleTask(
       id: 5,
       title: 'Презентация проекта',
-      startTime: '10:00',
-      endTime: '11:30',
+      startUtc: DateTime.utc(2025, 10, 18, 10, 0),
+      endUtc: DateTime.utc(2025, 10, 18, 11, 30),
       isImportant: true,
       date: DateTime(2025, 10, 18),
+      category: TaskCategory.learning,
       comment: 'Готовим демо для партнёров.',
       subTasks: const [
         SubTask(
@@ -149,12 +156,14 @@ class _MainScreenState extends State<MainScreen> {
           id: newId,
           title: task.title,
           date: task.date,
-          startTime: task.startTime,
-          endTime: task.endTime,
+          startUtc: task.startUtc,
+          endUtc: task.endUtc,
           isImportant: task.isImportant,
           isCompleted: task.isCompleted,
           subTasks: task.subTasks,
           comment: task.comment,
+          category: task.category,
+          hasReminder: task.hasReminder,
         ),
       );
     });

@@ -30,6 +30,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
   late bool _isTimeRange;
+  late TaskCategory _category;
+  late bool _hasReminder;
   late List<_EditableSubTask> _subTasks;
   late int _nextSubTaskId;
   String? _titleError;
@@ -73,14 +75,16 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     _editedTask = task;
     _titleController.text = task.title;
     _commentController.text = task.comment;
-    _startTime = parseTimeOfDay(task.startTime) ?? const TimeOfDay(hour: 9, minute: 0);
-    _endTime = parseTimeOfDay(task.endTime) ?? const TimeOfDay(hour: 10, minute: 0);
+    _startTime = timeOfDayFromDateTime(task.startUtc.toLocal());
+    _endTime = timeOfDayFromDateTime(task.endUtc.toLocal());
     _isTimeRange = task.hasDuration;
     if (!_isTimeRange) {
       _endTime = _startTime;
     } else if (!isEndAfterStart(_startTime, _endTime)) {
       _endTime = addMinutes(_startTime, 5);
     }
+    _category = task.category;
+    _hasReminder = task.hasReminder;
 
     for (final entry in _subTasks) {
       entry.controller.dispose();
@@ -132,6 +136,38 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
+  String _categoryLabel(TaskCategory category) {
+    switch (category) {
+      case TaskCategory.work:
+        return 'Работа';
+      case TaskCategory.personal:
+        return 'Личное';
+      case TaskCategory.health:
+        return 'Здоровье';
+      case TaskCategory.learning:
+        return 'Обучение';
+    }
+  }
+
+  Color _categoryColor(TaskCategory category) {
+    switch (category) {
+      case TaskCategory.work:
+        return const Color(0xFF2563EB);
+      case TaskCategory.personal:
+        return const Color(0xFF7C3AED);
+      case TaskCategory.health:
+        return const Color(0xFF16A34A);
+      case TaskCategory.learning:
+        return const Color(0xFFFB923C);
+    }
+  }
+
+  Color _darken(Color color, [double amount = 0.2]) {
+    final hsl = HSLColor.fromColor(color);
+    final lightness = (hsl.lightness - amount).clamp(0.0, 1.0);
+    return hsl.withLightness(lightness).toColor();
+  }
+
   Widget _buildSectionCard({required Widget child}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -151,10 +187,12 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   bool _tasksEqual(ScheduleTask a, ScheduleTask b) {
     if (a.title != b.title ||
         a.comment != b.comment ||
-        a.startTime != b.startTime ||
-        a.endTime != b.endTime ||
+        a.startUtc != b.startUtc ||
+        a.endUtc != b.endUtc ||
         a.isImportant != b.isImportant ||
         a.isCompleted != b.isCompleted ||
+        a.category != b.category ||
+        a.hasReminder != b.hasReminder ||
         a.subTasks.length != b.subTasks.length) {
       return false;
     }
@@ -205,6 +243,23 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
+  void _syncEditedTaskTimes() {
+    final startLocal = combineDateAndTime(
+      date: _editedTask.date,
+      time: _startTime,
+    );
+    final endLocal = combineDateAndTime(
+      date: _editedTask.date,
+      time: _isTimeRange ? _endTime : _startTime,
+    );
+    _applyTaskUpdate(
+      _editedTask.copyWith(
+        startUtc: startLocal.toUtc(),
+        endUtc: _isTimeRange ? endLocal.toUtc() : startLocal.toUtc(),
+      ),
+    );
+  }
+
   void _applyTimeRange(bool value) {
     setState(() {
       _isTimeRange = value;
@@ -213,12 +268,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       } else if (!isEndAfterStart(_startTime, _endTime)) {
         _endTime = addMinutes(_startTime, 5);
       }
-      _applyTaskUpdate(
-        _editedTask.copyWith(
-          startTime: formatTimeOfDay(_startTime),
-          endTime: formatTimeOfDay(_isTimeRange ? _endTime : _startTime),
-        ),
-      );
+      _syncEditedTaskTimes();
     });
   }
 
@@ -230,12 +280,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       } else if (!isEndAfterStart(_startTime, _endTime)) {
         _endTime = addMinutes(time, 5);
       }
-      _applyTaskUpdate(
-        _editedTask.copyWith(
-          startTime: formatTimeOfDay(_startTime),
-          endTime: formatTimeOfDay(_isTimeRange ? _endTime : _startTime),
-        ),
-      );
+      _syncEditedTaskTimes();
     });
   }
 
@@ -246,12 +291,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     }
     setState(() {
       _endTime = time;
-      _applyTaskUpdate(
-        _editedTask.copyWith(
-          startTime: formatTimeOfDay(_startTime),
-          endTime: formatTimeOfDay(_endTime),
-        ),
-      );
+      _syncEditedTaskTimes();
     });
   }
 
@@ -533,34 +573,74 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                       ),
                       contentPadding: EdgeInsets.zero,
                     ),
-                    const SizedBox(height: 8),
+                    const Divider(height: 24),
+                    Text(
+                      'Категория',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: TaskCategory.values.map((category) {
+                        final selected = _category == category;
+                        final color = _categoryColor(category);
+                        return ChoiceChip(
+                          label: Text(_categoryLabel(category)),
+                          selected: selected,
+                          onSelected: (_) {
+                            setState(() {
+                              _category = category;
+                              _applyTaskUpdate(
+                                _editedTask.copyWith(category: category),
+                              );
+                            });
+                          },
+                          selectedColor: color.withOpacity(0.18),
+                          labelStyle: TextStyle(
+                            color: selected ? _darken(color) : Colors.grey.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          avatar: CircleAvatar(
+                            backgroundColor: color.withOpacity(0.15),
+                            child: Icon(
+                              Icons.circle,
+                              size: 12,
+                              color: color,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 12),
                     SwitchListTile(
                       value: _editedTask.isImportant,
                       onChanged: _toggleImportant,
-                      title: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('Отметить как важное'),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFC9D9),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Text(
-                              'Важно',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFFB42318),
-                              ),
-                            ),
-                          ),
-                        ],
+                      title: const Text('Отметить как важное'),
+                      secondary: Icon(
+                        Icons.star_rounded,
+                        color:
+                            _editedTask.isImportant ? const Color(0xFFFB7185) : Colors.grey,
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    SwitchListTile(
+                      value: _hasReminder,
+                      onChanged: (value) {
+                        setState(() {
+                          _hasReminder = value;
+                          _applyTaskUpdate(
+                            _editedTask.copyWith(hasReminder: value),
+                          );
+                        });
+                      },
+                      title: const Text('Напоминание включено'),
+                      secondary: Icon(
+                        Icons.notifications_active_rounded,
+                        color: _hasReminder ? const Color(0xFF38BDF8) : Colors.grey,
                       ),
                       contentPadding: EdgeInsets.zero,
                     ),

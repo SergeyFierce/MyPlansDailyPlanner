@@ -64,21 +64,34 @@ class Task {
   }
 }
 
-class ScheduleTask extends Task {
-  final String startTime;
-  final String endTime;
+enum TaskCategory {
+  work,
+  personal,
+  health,
+  learning,
+}
 
-  const ScheduleTask({
+class ScheduleTask extends Task {
+  final DateTime startUtc;
+  final DateTime endUtc;
+  final TaskCategory category;
+  final bool hasReminder;
+
+  ScheduleTask({
     required int id,
     required String title,
     required DateTime date,
-    required this.startTime,
-    required this.endTime,
+    required this.startUtc,
+    required this.endUtc,
+    this.category = TaskCategory.work,
     bool isImportant = false,
     bool isCompleted = false,
+    this.hasReminder = false,
     List<SubTask> subTasks = const [],
     String comment = '',
-  }) : super(
+  })  : assert(startUtc.isUtc, 'startUtc must be stored in UTC'),
+        assert(endUtc.isUtc, 'endUtc must be stored in UTC'),
+        super(
           id: id,
           title: title,
           date: date,
@@ -88,30 +101,36 @@ class ScheduleTask extends Task {
           comment: comment,
         );
 
-  bool get hasDuration => startTime != endTime;
+  bool get hasDuration => !startUtc.isAtSameMomentAs(endUtc);
+
+  Duration get effectiveDuration => endUtc.difference(startUtc);
 
   @override
   ScheduleTask copyWith({
     String? title,
     DateTime? date,
-    String? startTime,
-    String? endTime,
+    DateTime? startUtc,
+    DateTime? endUtc,
     bool? isImportant,
     bool? isCompleted,
     List<SubTask>? subTasks,
     String? comment,
+    TaskCategory? category,
+    bool? hasReminder,
   }) {
     final updatedSubTasks = subTasks ?? this.subTasks;
     return ScheduleTask(
       id: id,
       title: title ?? this.title,
       date: date ?? this.date,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
+      startUtc: startUtc ?? this.startUtc,
+      endUtc: endUtc ?? this.endUtc,
       isImportant: isImportant ?? this.isImportant,
       isCompleted: isCompleted ?? this.isCompleted,
       subTasks: updatedSubTasks,
       comment: comment ?? this.comment,
+      category: category ?? this.category,
+      hasReminder: hasReminder ?? this.hasReminder,
     );
   }
 }
