@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide Badge, SegmentedButton;
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
+import 'package:intl/intl.dart';
 
 import '../../models/formatted_date.dart';
 import '../../models/task.dart';
@@ -132,8 +133,9 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
       return a.year == b.year && a.month == b.month && a.day == b.day;
     }
 
-    final candidateStart = minutesFromTime(candidate.startTime);
-    final candidateEnd = minutesFromTime(candidate.endTime);
+    final formatter = DateFormat('HH:mm');
+    final candidateStart = candidate.startUtc.toLocal();
+    final candidateEnd = candidate.endUtc.toLocal();
     final isPoint = !candidate.hasDuration;
 
     for (final task in widget.scheduleTasks) {
@@ -144,19 +146,19 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
         continue;
       }
 
-      final existingStart = minutesFromTime(task.startTime);
-      final existingEnd = minutesFromTime(task.endTime);
+      final existingStart = task.startUtc.toLocal();
+      final existingEnd = task.endUtc.toLocal();
       final existingIsPoint = !task.hasDuration;
 
       if (isPoint && existingIsPoint && existingStart == candidateStart) {
-        return 'На ${candidate.startTime} уже запланировано дело «${task.title}». Выберите другое время.';
+        return 'На ${formatter.format(candidateStart)} уже запланировано дело «${task.title}». Выберите другое время.';
       }
 
       if (!isPoint &&
           !existingIsPoint &&
           existingStart == candidateStart &&
           existingEnd == candidateEnd) {
-        final label = formatTimeLabel(candidate.startTime, candidate.endTime);
+        final label = formatTimeRange(candidateStart, candidateEnd);
         return 'Промежуток $label уже занят делом «${task.title}». Измените время.';
       }
     }
