@@ -10,11 +10,13 @@ class TaskDetailsScreen extends StatefulWidget {
     required this.task,
     required this.onUpdateTask,
     required this.onDeleteTask,
+    required this.validateTask,
   });
 
   final ScheduleTask task;
   final ValueChanged<ScheduleTask> onUpdateTask;
   final ValueChanged<int> onDeleteTask;
+  final String? Function(ScheduleTask task) validateTask;
 
   @override
   State<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
@@ -356,6 +358,14 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       comment: _commentController.text.trim(),
       subTasks: _collectSubTasks(),
     );
+
+    final validationError = widget.validateTask(updatedTask);
+    if (validationError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(validationError)),
+      );
+      return;
+    }
 
     widget.onUpdateTask(updatedTask);
     setState(() {
