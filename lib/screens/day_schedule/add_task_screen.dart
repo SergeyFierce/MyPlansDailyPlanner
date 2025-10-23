@@ -5,9 +5,14 @@ import '../../utils/time_utils.dart';
 import '../../widgets/time_picker_field.dart';
 
 class AddTaskScreen extends StatefulWidget {
-  const AddTaskScreen({super.key, required this.selectedDate});
+  const AddTaskScreen({
+    super.key,
+    required this.selectedDate,
+    required this.validateTask,
+  });
 
   final DateTime selectedDate;
+  final String? Function(ScheduleTask task) validateTask;
 
   @override
   State<AddTaskScreen> createState() => _AddTaskScreenState();
@@ -112,6 +117,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       date: widget.selectedDate,
       subTasks: const [],
     );
+
+    final validationError = widget.validateTask(task);
+    if (validationError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(validationError)),
+      );
+      return;
+    }
 
     Navigator.of(context).pop(task);
   }

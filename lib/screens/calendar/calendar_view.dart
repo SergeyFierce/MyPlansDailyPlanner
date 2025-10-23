@@ -7,6 +7,7 @@ import '../../widgets/badge.dart';
 import '../../widgets/custom_calendar.dart';
 import '../../widgets/segmented_button.dart';
 import '../../widgets/task_list.dart';
+import '../../utils/time_utils.dart';
 import '../day_schedule/task_details_screen.dart';
 
 class CalendarView extends StatefulWidget {
@@ -116,11 +117,51 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
     return widget.scheduleTasks
         .where(
           (task) =>
-      task.date.year == date.year &&
-          task.date.month == date.month &&
-          task.date.day == date.day,
-    )
+              task.date.year == date.year &&
+              task.date.month == date.month &&
+              task.date.day == date.day,
+        )
         .toList();
+  }
+
+  String? _validateTaskTime(
+    ScheduleTask candidate, {
+    int? ignoreTaskId,
+  }) {
+    bool isSameDay(DateTime a, DateTime b) {
+      return a.year == b.year && a.month == b.month && a.day == b.day;
+    }
+
+    final candidateStart = minutesFromTime(candidate.startTime);
+    final candidateEnd = minutesFromTime(candidate.endTime);
+    final isPoint = !candidate.hasDuration;
+
+    for (final task in widget.scheduleTasks) {
+      if (ignoreTaskId != null && task.id == ignoreTaskId) {
+        continue;
+      }
+      if (!isSameDay(task.date, candidate.date)) {
+        continue;
+      }
+
+      final existingStart = minutesFromTime(task.startTime);
+      final existingEnd = minutesFromTime(task.endTime);
+      final existingIsPoint = !task.hasDuration;
+
+      if (isPoint && existingIsPoint && existingStart == candidateStart) {
+        return 'На ${candidate.startTime} уже запланировано дело «${task.title}». Выберите другое время.';
+      }
+
+      if (!isPoint &&
+          !existingIsPoint &&
+          existingStart == candidateStart &&
+          existingEnd == candidateEnd) {
+        final label = formatTimeLabel(candidate.startTime, candidate.endTime);
+        return 'Промежуток $label уже занят делом «${task.title}». Измените время.';
+      }
+    }
+
+    return null;
   }
 
   void _openTaskDetails(ScheduleTask task) {
@@ -130,6 +171,8 @@ class _CalendarViewState extends State<CalendarView> with TickerProviderStateMix
           task: task,
           onUpdateTask: widget.onUpdateTask,
           onDeleteTask: widget.onDeleteTask,
+          validateTask: (candidate) =>
+              _validateTaskTime(candidate, ignoreTaskId: task.id),
         ),
       ),
     );
